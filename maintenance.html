@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMLFS Maintenance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --primary-light: #2a5a8c;
+    --accent: #e8a838;
+    --green: #27ae60;
+    --red: #e74c3c;
+    --orange: #f39c12;
+    --grey-bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --text: #2c3e50;
+    --text-light: #7f8c8d;
+    --border: #e0e4e8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+    background: var(--grey-bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    padding: 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  header h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+  header .subtitle { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+  .header-right { text-align: right; }
+  .header-right .period { font-size: 15px; font-weight: 600; }
+  .header-right .updated { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+
+  .logo-text { display: flex; align-items: center; gap: 12px; }
+  .logo-badge {
+    background: var(--accent); color: var(--primary);
+    font-weight: 800; font-size: 14px; padding: 6px 10px;
+    border-radius: 6px; letter-spacing: 1px;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: var(--card-bg); border-radius: 12px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border-left: 4px solid var(--primary); transition: transform 0.15s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .kpi-card.accent { border-left-color: var(--accent); }
+  .kpi-card.green { border-left-color: var(--green); }
+  .kpi-card.red { border-left-color: var(--red); }
+  .kpi-card.orange { border-left-color: var(--orange); }
+
+  .kpi-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-light); margin-bottom: 8px; font-weight: 600;
+  }
+  .kpi-value { font-size: 32px; font-weight: 700; color: var(--text); line-height: 1; }
+  .kpi-sub { font-size: 13px; color: var(--text-light); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+  .kpi-sub .up { color: var(--green); }
+  .kpi-sub .down { color: var(--red); }
+
+  /* Two-column sections */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  .card {
+    background: var(--card-bg); border-radius: 12px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .card h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+
+  .margin-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .margin-row:last-child { border-bottom: none; }
+  .margin-row .label { font-size: 13px; color: var(--text-light); }
+  .margin-row .value { font-size: 15px; font-weight: 700; }
+  .margin-row .value.good { color: var(--green); }
+  .margin-row .value.warn { color: var(--orange); }
+  .margin-row .value.bad { color: var(--red); }
+
+  .margin-bar { height: 6px; background: #eee; border-radius: 3px; margin-top: 4px; width: 100%; }
+  .margin-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+  .chart-container { position: relative; height: 260px; }
+
+  /* Gang table */
+  .gang-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .gang-table th {
+    text-align: left; padding: 8px 10px; background: var(--grey-bg);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-light); font-weight: 600; border-bottom: 2px solid var(--border);
+  }
+  .gang-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .gang-table tr:last-child td { border-bottom: none; }
+  .gang-table .gang-name-cell { font-weight: 600; color: var(--text); max-width: 180px; }
+  .gang-table .revenue-cell { font-weight: 700; color: var(--primary); text-align: right; }
+  .gang-table .status-cell { text-align: center; }
+
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-active { background: #e8f5e9; color: var(--green); }
+  .badge-idle { background: #fff3e0; color: var(--orange); }
+
+  /* Equipment utilisation */
+  .equip-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .equip-stat {
+    background: var(--grey-bg); border-radius: 8px; padding: 14px; text-align: center;
+  }
+  .equip-stat .eq-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-light); font-weight: 600;
+  }
+  .equip-stat .eq-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+
+  .equip-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
+  .equip-table th {
+    text-align: left; padding: 6px 8px; background: var(--grey-bg);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-light); font-weight: 600;
+  }
+  .equip-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+
+  .utilisation-bar {
+    display: flex; height: 24px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;
+  }
+  .utilisation-bar > div {
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 11px; font-weight: 600;
+  }
+  .util-deployed { background: var(--green); }
+  .util-idle { background: var(--orange); }
+
+  .util-legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-light); margin-bottom: 12px; }
+  .util-legend span::before {
+    content: ''; display: inline-block; width: 10px; height: 10px;
+    border-radius: 2px; margin-right: 6px; vertical-align: middle;
+  }
+  .util-legend .leg-dep::before { background: var(--green); }
+  .util-legend .leg-idle::before { background: var(--orange); }
+
+  .target-indicator {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--grey-bg); border-radius: 8px; padding: 10px 14px;
+    margin-bottom: 16px; font-size: 13px;
+  }
+  .target-indicator .ti-label { color: var(--text-light); }
+  .target-indicator .ti-value { font-weight: 700; color: var(--primary); }
+  .target-indicator .ti-status { margin-left: auto; font-weight: 600; }
+
+  /* Cherry Picker Utilisation */
+  .cp-section {
+    background: var(--card-bg); border-radius: 12px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 24px;
+  }
+  .cp-section h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+
+  .cp-kpi-row {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;
+  }
+  .cp-kpi {
+    background: var(--grey-bg); border-radius: 8px; padding: 14px; text-align: center;
+  }
+  .cp-kpi .cpk-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-light); font-weight: 600;
+  }
+  .cp-kpi .cpk-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+
+  .cp-fleet-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .cp-fleet-table th {
+    text-align: left; padding: 8px 10px; background: var(--grey-bg);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-light); font-weight: 600; border-bottom: 2px solid var(--border);
+  }
+  .cp-fleet-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .cp-fleet-table tr:last-child td { border-bottom: none; }
+
+  .util-mini-bar {
+    display: flex; height: 16px; border-radius: 4px; overflow: hidden;
+    background: #eee; width: 100%;
+  }
+  .util-mini-bar .fill {
+    height: 100%; border-radius: 4px 0 0 4px; transition: width 0.3s;
+  }
+  .util-pct { font-weight: 700; font-size: 13px; min-width: 42px; text-align: right; }
+
+  .cp-bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+
+  .data-note {
+    text-align: center; font-size: 12px; color: var(--text-light);
+    padding: 16px; border-top: 1px solid var(--border); margin-top: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .two-col { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .equip-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">
+    <span class="logo-badge">RMLFS</span>
+    <div>
+      <h1>Maintenance Dashboard</h1>
+      <div class="subtitle">Roof Management Ltd &mdash; Maintenance Division</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="period">Week 13 &mdash; 23 Mar 2026</div>
+    <div class="updated">Last updated: 23 Mar 2026 &bull; Source: Planning 2026</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card accent">
+      <div class="kpi-label">Weekly Revenue (Actual)</div>
+      <div class="kpi-value">&mdash;</div>
+      <div class="kpi-sub">Week not yet closed &bull; Target: &pound;100k</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Revenue vs Target (MTD)</div>
+      <div class="kpi-value">&pound;344k</div>
+      <div class="kpi-sub"><span class="up">&#9650; &pound;344k</span> of &pound;344k March target</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Projected Revenue (Week)</div>
+      <div class="kpi-value">&pound;99k</div>
+      <div class="kpi-sub">Gang planned values total</div>
+    </div>
+    <div class="kpi-card accent">
+      <div class="kpi-label">Active Gangs</div>
+      <div class="kpi-value">8</div>
+      <div class="kpi-sub">of 12 total &bull; <span class="up">&#9650;1</span> vs last week</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Man Days (Last Week)</div>
+      <div class="kpi-value">51</div>
+      <div class="kpi-sub"><span class="up">&#9650; 3</span> vs w/c 9th Mar (48)</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Value Per Man Day</div>
+      <div class="kpi-value">&pound;2,232</div>
+      <div class="kpi-sub">w/c 16th Mar &bull; Target: &pound;2,000+</div>
+    </div>
+  </div>
+
+  <!-- Revenue Performance & Weekly Actuals -->
+  <div class="two-col">
+    <div class="card">
+      <h3>Weekly Revenue &mdash; 2026 YTD</h3>
+      <div class="chart-container">
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Revenue vs Target by Month</h3>
+      <div class="margin-row">
+        <span class="label">January</span>
+        <span class="value good">&pound;535,325 <small style="font-weight:400;color:var(--text-light)">(+&pound;135k vs &pound;400k target)</small></span>
+      </div>
+      <div class="margin-bar"><div class="margin-bar-fill" style="width:100%;background:var(--green)"></div></div>
+
+      <div class="margin-row">
+        <span class="label">February</span>
+        <span class="value good">&pound;485,168 <small style="font-weight:400;color:var(--text-light)">(+&pound;85k vs &pound;400k target)</small></span>
+      </div>
+      <div class="margin-bar"><div class="margin-bar-fill" style="width:100%;background:var(--green)"></div></div>
+
+      <div class="margin-row">
+        <span class="label">March (to 16th)</span>
+        <span class="value warn">&pound;344,145 <small style="font-weight:400;color:var(--text-light)">(2 weeks remaining)</small></span>
+      </div>
+      <div class="margin-bar"><div class="margin-bar-fill" style="width:69%;background:var(--orange)"></div></div>
+
+      <div style="margin-top:16px; padding:12px; background:var(--grey-bg); border-radius:8px;">
+        <div class="margin-row" style="border:none;padding:4px 0">
+          <span class="label"><strong>YTD Actual</strong></span>
+          <span class="value" style="color:var(--primary)">&pound;1,364,638</span>
+        </div>
+        <div class="margin-row" style="border:none;padding:4px 0">
+          <span class="label"><strong>YTD Target</strong></span>
+          <span class="value" style="color:var(--text)">&pound;1,144,145</span>
+        </div>
+        <div class="margin-row" style="border:none;padding:4px 0">
+          <span class="label"><strong>YTD Variance</strong></span>
+          <span class="value good">+&pound;220,493</span>
+        </div>
+        <div class="margin-row" style="border:none;padding:4px 0">
+          <span class="label"><strong>2025 Same Period</strong></span>
+          <span class="value" style="color:var(--text-light)">&pound;973,316</span>
+        </div>
+        <div class="margin-row" style="border:none;padding:4px 0">
+          <span class="label"><strong>YoY Growth</strong></span>
+          <span class="value good">+40.2%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gang Deployment & Productivity -->
+  <div class="two-col">
+    <div class="card">
+      <h3>Gang Deployment &mdash; w/c 23rd March</h3>
+      <table class="gang-table">
+        <thead>
+          <tr><th>Gang</th><th>Region</th><th style="text-align:right">Planned &pound;</th><th style="text-align:center">Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="gang-name-cell">Kamil &amp; Mariusz</td>
+            <td>Scotland / NW</td>
+            <td class="revenue-cell">&pound;10,000</td>
+            <td class="status-cell"><span class="badge badge-active">Active</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Jack Glover &amp; Matty Carter</td>
+            <td>Northwest</td>
+            <td class="revenue-cell">&pound;6,000</td>
+            <td class="status-cell"><span class="badge badge-active">Active</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Gary Harmison &amp; Kyle</td>
+            <td>Northeast</td>
+            <td class="revenue-cell">&pound;10,000</td>
+            <td class="status-cell"><span class="badge badge-active">Active</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Alan Ankers &amp; Lee Taylor</td>
+            <td>Northeast</td>
+            <td class="revenue-cell">&pound;8,000</td>
+            <td class="status-cell"><span class="badge badge-active">Active</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Mike Hooper &amp; Nick Worgan</td>
+            <td>Southwest</td>
+            <td class="revenue-cell">&mdash;</td>
+            <td class="status-cell"><span class="badge badge-active">Active</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Brandon Powell &amp; Kyle Stanley</td>
+            <td>Midlands</td>
+            <td class="revenue-cell">&pound;11,000</td>
+            <td class="status-cell"><span class="badge badge-active">Active</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">James Rutniewski &amp; Joel</td>
+            <td>Wales / Midlands</td>
+            <td class="revenue-cell">&pound;15,000</td>
+            <td class="status-cell"><span class="badge badge-active">Active</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Dan Lillie &amp; Josh Clack</td>
+            <td>London / South</td>
+            <td class="revenue-cell">&pound;14,000</td>
+            <td class="status-cell"><span class="badge badge-active">Active</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Alan (Turkey Teeth)</td>
+            <td>Northeast</td>
+            <td class="revenue-cell">&mdash;</td>
+            <td class="status-cell"><span class="badge badge-idle">Light</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Gordon &amp; Paddy</td>
+            <td>Wales / SW</td>
+            <td class="revenue-cell">&mdash;</td>
+            <td class="status-cell"><span class="badge badge-idle">Light</span></td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">New Gang</td>
+            <td>&mdash;</td>
+            <td class="revenue-cell">&mdash;</td>
+            <td class="status-cell"><span class="badge badge-idle">TBC</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px 14px;background:var(--grey-bg);border-radius:8px;display:flex;justify-content:space-between;font-size:13px">
+        <span style="color:var(--text-light)">Total Planned Gang Revenue</span>
+        <span style="font-weight:700;color:var(--primary)">&pound;99,000</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Productivity &mdash; Value Per Man Day</h3>
+      <div class="target-indicator">
+        <span class="ti-label">Weekly Target:</span>
+        <span class="ti-value">&pound;100,000</span>
+        <span class="ti-label" style="margin-left:16px">V/P Man Day Target:</span>
+        <span class="ti-value">&pound;2,000+</span>
+      </div>
+      <div class="chart-container" style="height:220px">
+        <canvas id="productivityChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cherry Picker Fleet Utilisation (RML Owned) -->
+  <div class="cp-section">
+    <h3>Cherry Picker Fleet Utilisation &mdash; 9 RML-Owned Units &mdash; w/c 23rd March</h3>
+
+    <div class="cp-kpi-row">
+      <div class="cp-kpi">
+        <div class="cpk-label">Fleet Size</div>
+        <div class="cpk-value" style="color:var(--primary)">9</div>
+      </div>
+      <div class="cp-kpi">
+        <div class="cpk-label">Deployed This Week</div>
+        <div class="cpk-value" style="color:var(--text-light)">&mdash;</div>
+      </div>
+      <div class="cp-kpi">
+        <div class="cpk-label">Fleet Utilisation</div>
+        <div class="cpk-value" style="color:var(--text-light)">&mdash;</div>
+      </div>
+      <div class="cp-kpi">
+        <div class="cpk-label">Total Jobs (Week)</div>
+        <div class="cpk-value" style="color:var(--text-light)">&mdash;</div>
+      </div>
+      <div class="cp-kpi">
+        <div class="cpk-label">Avg Jobs Per CP</div>
+        <div class="cpk-value" style="color:var(--text-light)">&mdash;</div>
+      </div>
+    </div>
+
+    <table class="cp-fleet-table">
+      <thead>
+        <tr>
+          <th>Unit</th>
+          <th>Type / Notes</th>
+          <th style="text-align:center">Days Available</th>
+          <th style="text-align:center">Days Deployed</th>
+          <th style="width:180px">Utilisation</th>
+          <th style="text-align:center">Jobs</th>
+          <th>Current Location / Gang</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">CP-01</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CP-02</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CP-03</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CP-04</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CP-05</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CP-06</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CP-07</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CP-08</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CP-09</td>
+          <td style="color:var(--text-light)">&mdash;</td>
+          <td style="text-align:center">5</td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="util-mini-bar"><div class="fill" style="width:0%;background:var(--green)"></div></div>
+              <span class="util-pct" style="color:var(--text-light)">&mdash;</span>
+            </div>
+          </td>
+          <td style="text-align:center;color:var(--text-light)">&mdash;</td>
+          <td style="color:var(--text-light)">Awaiting data</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cp-bottom-row">
+      <div>
+        <p style="font-size:12px;color:var(--text-light);font-weight:600;margin-bottom:8px;">Fleet Utilisation Trend</p>
+        <div class="chart-container" style="height:160px">
+          <canvas id="cpUtilChart"></canvas>
+        </div>
+      </div>
+      <div style="background:var(--grey-bg);border-radius:8px;padding:16px">
+        <p style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">Data Required (Monday.com Board)</p>
+        <div style="font-size:12px;color:var(--text-light);line-height:1.8">
+          &bull; Each CP logged daily: Deployed / Idle / In Workshop<br>
+          &bull; Assigned gang or job site per day<br>
+          &bull; Jobs completed count per CP per week<br>
+          &bull; Any breakdown or service notes<br>
+          <span style="margin-top:8px;display:block;color:var(--accent);font-weight:600">
+            Once the Monday.com CP board is live, this section will auto-populate.
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hired Equipment & Safety -->
+  <div class="two-col">
+    <div class="card">
+      <h3>Hired Equipment (External) &mdash; w/c 23rd March</h3>
+      <div class="equip-grid">
+        <div class="equip-stat">
+          <div class="eq-label">Items on Hire</div>
+          <div class="eq-value" style="color:var(--primary)">12</div>
+        </div>
+        <div class="equip-stat">
+          <div class="eq-label">Access Equipment</div>
+          <div class="eq-value" style="color:var(--accent)">8</div>
+        </div>
+        <div class="equip-stat">
+          <div class="eq-label">Weekly Hire Cost</div>
+          <div class="eq-value" style="color:var(--red)">&pound;4,001</div>
+        </div>
+      </div>
+
+      <p style="font-size:12px;color:var(--text-light);margin-bottom:8px;font-weight:600;">Access Equipment Deployed vs Available</p>
+      <div class="utilisation-bar">
+        <div class="util-deployed" style="width:67%">67% Deployed</div>
+        <div class="util-idle" style="width:33%">33% Available</div>
+      </div>
+      <div class="util-legend">
+        <span class="leg-dep">On Jobs</span>
+        <span class="leg-idle">Available / Between Jobs</span>
+      </div>
+
+      <table class="equip-table">
+        <thead>
+          <tr><th>Site</th><th>Equipment</th><th>Supplier</th><th style="text-align:right">Cost/wk</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>B&amp;M Northallerton</td><td>80ft Cherry Picker</td><td>Hire Safe</td><td style="text-align:right">&pound;757</td></tr>
+          <tr><td>B&amp;M Neath</td><td>Scissor Lift</td><td>Hire Safe</td><td style="text-align:right">&pound;480</td></tr>
+          <tr><td>B&amp;M Blackburn</td><td>80ft Cherry Picker</td><td>Hire Safe</td><td style="text-align:right">&pound;757</td></tr>
+          <tr><td>B&amp;M Berwick</td><td>Z30</td><td>Hire Safe</td><td style="text-align:right">&pound;435</td></tr>
+          <tr><td>JD Weymouth</td><td>Skip</td><td>Coast 2 Coast</td><td style="text-align:right">&pound;420</td></tr>
+          <tr><td>B&amp;M Bicester</td><td>Skip</td><td>Kenny Waste</td><td style="text-align:right">&pound;375</td></tr>
+          <tr><td>TKM Chesterfield</td><td>Star 10</td><td>Hire Safe</td><td style="text-align:right">&pound;372</td></tr>
+          <tr><td>TK Maxx Runcorn</td><td>60ft Cherry Picker</td><td>Hire Safe</td><td style="text-align:right">&pound;324</td></tr>
+          <tr><td>B&amp;M Irvine</td><td>Alloy Tower</td><td>Speedy</td><td style="text-align:right">&pound;75</td></tr>
+          <tr><td>B&amp;M Bicester</td><td>Heras Fencing</td><td>Speedy</td><td style="text-align:right">&pound;6</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Safety Inspections &amp; PMs &mdash; w/c 23rd March</h3>
+      <div class="equip-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="equip-stat">
+          <div class="eq-label">Inspection Target</div>
+          <div class="eq-value" style="color:var(--primary)">10</div>
+        </div>
+        <div class="equip-stat">
+          <div class="eq-label">Completed</div>
+          <div class="eq-value" style="color:var(--text-light)">&mdash;</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:16px">Project Managers</h3>
+      <table class="gang-table">
+        <thead>
+          <tr><th>PM</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="gang-name-cell">Gary Humprage</td>
+            <td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td>
+          </tr>
+          <tr>
+            <td class="gang-name-cell">Luke Delaney</td>
+            <td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:20px">Hire Cost Trend &mdash; Last 4 Weeks</h3>
+      <div class="chart-container" style="height:160px">
+        <canvas id="hireCostChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="data-note">
+    Data source: Planning 2026-2.xlsx &amp; Weekly Update sheet &bull; Revenue actuals from SwiftCase/Monday.com &bull;
+    Callouts, completed jobs &amp; small works counts will populate from Monday.com board once created
+  </div>
+</div>
+
+<script>
+  // Weekly Revenue Chart (actual vs target)
+  const revCtx = document.getElementById('revenueChart').getContext('2d');
+  new Chart(revCtx, {
+    type: 'bar',
+    data: {
+      labels: ['5 Jan', '12 Jan', '19 Jan', '26 Jan', '2 Feb', '9 Feb', '16 Feb', '23 Feb', '2 Mar', '9 Mar', '16 Mar', '23 Mar'],
+      datasets: [
+        {
+          label: 'Actual Revenue',
+          data: [85976, 161535, 132242, 155571, 113384, 126590, 120476, 124718, 82436, 147856, 113854, null],
+          backgroundColor: '#1a3a5c',
+          borderRadius: 4,
+          barPercentage: 0.6
+        },
+        {
+          label: 'Projected',
+          data: [110000, 132000, 172000, 222000, 140000, 125000, 120000, 154000, 152000, 137000, 150000, 99000],
+          backgroundColor: 'rgba(232,168,56,0.3)',
+          borderColor: '#e8a838',
+          borderWidth: 1,
+          borderRadius: 4,
+          barPercentage: 0.6
+        },
+        {
+          label: 'Target (£100k)',
+          data: [100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000],
+          type: 'line',
+          borderColor: '#e74c3c',
+          borderDash: [5, 5],
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.raw === null) return ctx.dataset.label + ': Not yet reported';
+              return ctx.dataset.label + ': £' + ctx.raw.toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f0f0f0' },
+          ticks: { callback: v => '£' + (v/1000) + 'k', font: { size: 11 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Productivity Chart (V/P Man Day)
+  const prodCtx = document.getElementById('productivityChart').getContext('2d');
+  new Chart(prodCtx, {
+    type: 'bar',
+    data: {
+      labels: ['5 Jan', '12 Jan', '19 Jan', '26 Jan', '2 Feb', '9 Feb', '16 Feb', '23 Feb', '2 Mar', '9 Mar', '16 Mar'],
+      datasets: [
+        {
+          label: 'Value Per Man Day (£)',
+          data: [1508, 2605, 2320, 2469, 1955, 2944, 2151, 2353, 2169, 3080, 2232],
+          backgroundColor: function(ctx) {
+            return ctx.raw >= 2000 ? '#27ae60' : '#f39c12';
+          },
+          borderRadius: 4,
+          barPercentage: 0.65
+        },
+        {
+          label: 'Target (£2,000)',
+          data: [2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
+          type: 'line',
+          borderColor: '#e74c3c',
+          borderDash: [5, 5],
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': £' + ctx.raw.toLocaleString()
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f0f0f0' },
+          ticks: { callback: v => '£' + v.toLocaleString(), font: { size: 11 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Hire Cost Trend
+  const hireCtx = document.getElementById('hireCostChart').getContext('2d');
+  new Chart(hireCtx, {
+    type: 'line',
+    data: {
+      labels: ['2 Mar', '9 Mar', '16 Mar', '23 Mar'],
+      datasets: [{
+        label: 'Weekly Hire Cost',
+        data: [4616, 3796, 6871, 4001],
+        borderColor: '#e74c3c',
+        backgroundColor: 'rgba(231,76,60,0.1)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 5,
+        pointBackgroundColor: '#e74c3c',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => '£' + ctx.raw.toLocaleString() } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#f0f0f0' },
+          ticks: { callback: v => '£' + (v/1000).toFixed(1) + 'k', font: { size: 10 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // CP Fleet Utilisation Trend (placeholder - will populate from Monday.com)
+  const cpCtx = document.getElementById('cpUtilChart').getContext('2d');
+  new Chart(cpCtx, {
+    type: 'line',
+    data: {
+      labels: ['Wk 8', 'Wk 9', 'Wk 10', 'Wk 11', 'Wk 12', 'Wk 13'],
+      datasets: [{
+        label: 'Fleet Utilisation %',
+        data: [null, null, null, null, null, null],
+        borderColor: '#1a3a5c',
+        backgroundColor: 'rgba(26,58,92,0.1)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 5,
+        pointBackgroundColor: '#1a3a5c',
+        borderWidth: 2,
+        spanGaps: false
+      },
+      {
+        label: 'Target (80%)',
+        data: [80, 80, 80, 80, 80, 80],
+        borderColor: '#e74c3c',
+        borderDash: [5, 5],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ctx.raw !== null ? ctx.dataset.label + ': ' + ctx.raw + '%' : 'No data' } }
+      },
+      scales: {
+        y: {
+          min: 0, max: 100,
+          grid: { color: '#f0f0f0' },
+          ticks: { callback: v => v + '%', font: { size: 10 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

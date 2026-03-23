@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMLFS Ltd — Finance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; font-family: 'Inter', -apple-system, sans-serif; color: #f1f5f9; min-height: 100vh; }
+
+  .header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid #334155; padding: 28px 32px 20px; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-label { font-size: 11px; font-weight: 600; color: #2563eb; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+  .header h1 { font-size: 26px; font-weight: 800; background: linear-gradient(90deg, #f1f5f9, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header-sub { color: #64748b; font-size: 13px; margin-top: 6px; }
+  .header-right { text-align: right; }
+  .header-right .label { font-size: 11px; color: #64748b; }
+  .header-right .value { font-size: 15px; font-weight: 700; }
+  .header-right .date { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+  .tabs { display: flex; gap: 4px; margin-top: 20px; }
+  .tab { padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; background: transparent; color: #94a3b8; transition: all 0.2s; font-family: inherit; }
+  .tab:hover { color: #f1f5f9; background: rgba(255,255,255,0.05); }
+  .tab.active { background: #2563eb; color: #fff; }
+
+  .container { padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 8px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 8px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .kpi { background: #1e293b; border-radius: 12px; padding: 20px 24px; position: relative; overflow: hidden; }
+  .kpi .bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .kpi .kpi-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .kpi .kpi-value { font-size: 28px; font-weight: 700; }
+  .kpi .kpi-unit { font-size: 14px; color: #94a3b8; margin-left: 4px; }
+  .kpi .kpi-target { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .kpi .kpi-badge { display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+  .kpi.green { border: 1px solid rgba(22,163,74,0.4); }
+  .kpi.green .bar { background: #16a34a; }
+  .kpi.green .kpi-badge { background: rgba(22,163,74,0.15); color: #16a34a; }
+  .kpi.amber { border: 1px solid rgba(245,158,11,0.4); }
+  .kpi.amber .bar { background: #f59e0b; }
+  .kpi.amber .kpi-badge { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .kpi.red { border: 1px solid rgba(220,38,38,0.4); }
+  .kpi.red .bar { background: #dc2626; }
+  .kpi.red .kpi-badge { background: rgba(220,38,38,0.15); color: #dc2626; }
+
+  .card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+  .card-title { font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 16px; }
+  .card-accent { background: #1e293b; border-radius: 12px; padding: 20px 24px; }
+  .card-accent .ca-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+  .card-accent .ca-value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .card-accent .ca-sub { font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+  .section-title { margin-bottom: 16px; margin-top: 32px; }
+  .section-title h2 { font-size: 18px; font-weight: 700; }
+  .section-title p { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table th { padding: 12px 16px; color: #94a3b8; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; }
+  table td { padding: 10px 16px; border-bottom: 1px solid #334155; }
+  table .label-cell { color: #94a3b8; font-weight: 600; font-size: 12px; text-align: left; }
+  table .value-cell { color: #f1f5f9; font-weight: 500; text-align: right; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  canvas { max-height: 300px; }
+
+  .footer { text-align: center; padding: 32px 0 24px; border-top: 1px solid #334155; margin-top: 40px; }
+  .footer p { font-size: 11px; color: #64748b; }
+
+  @media (max-width: 900px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-label">RMLFS Ltd — Finance Dashboard</div>
+      <h1>Growth Strategy: £12.5m → £37.5m</h1>
+      <p class="header-sub">FY26–FY31 Revenue Plan & Cashflow Forecast | April–March Financial Year</p>
+    </div>
+    <div class="header-right">
+      <div class="label">Latest P&L</div>
+      <div class="value">February 2026</div>
+      <div class="date">Updated 23 Mar 2026</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="revenue">Revenue Strategy</button>
+    <button class="tab" data-tab="pl">P&L — Feb 2026</button>
+    <button class="tab" data-tab="cash">Cashflow & Cash</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ===== OVERVIEW ===== -->
+  <div class="tab-content active" id="overview">
+    <div class="grid-4">
+      <div class="kpi green"><div class="bar"></div>
+        <div class="kpi-label">Gross Margin</div>
+        <div class="kpi-value">37.2<span class="kpi-unit">%</span></div>
+        <div class="kpi-target">Target: 33.9%</div>
+        <div class="kpi-badge">9.7pts above plan</div>
+      </div>
+      <div class="kpi amber"><div class="bar"></div>
+        <div class="kpi-label">Monthly Revenue</div>
+        <div class="kpi-value">£991k</div>
+        <div class="kpi-target">Target: £1.04m</div>
+        <div class="kpi-badge">4.9% below plan</div>
+      </div>
+      <div class="kpi red"><div class="bar"></div>
+        <div class="kpi-label">Net Profit</div>
+        <div class="kpi-value">£55.7k</div>
+        <div class="kpi-target">Target: £72k</div>
+        <div class="kpi-badge">22.6% below plan</div>
+      </div>
+      <div class="kpi red"><div class="bar"></div>
+        <div class="kpi-label">Net Margin</div>
+        <div class="kpi-value">5.6<span class="kpi-unit">%</span></div>
+        <div class="kpi-target">Target: 6.9%</div>
+        <div class="kpi-badge">1.3pts below plan</div>
+      </div>
+    </div>
+
+    <div class="section-title"><h2>Revenue & Profit Trajectory</h2><p>5-year growth strategy from £12.5m base to £37.5m target</p></div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">Revenue, Gross Profit & Net Profit (£m)</div><canvas id="revenueChart"></canvas></div>
+      <div class="card"><div class="card-title">Margin Improvement (%)</div><canvas id="marginChart"></canvas></div>
+    </div>
+
+    <div class="section-title"><h2>Five-Year Snapshot</h2></div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table>
+        <thead><tr>
+          <th style="text-align:left"></th><th style="text-align:right">FY26 (Base)</th><th style="text-align:right">FY27</th><th style="text-align:right">FY28</th><th style="text-align:right">FY29</th><th style="text-align:right">FY30</th><th style="text-align:right">FY31</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="label-cell">Revenue</td><td class="value-cell">£12.5m</td><td class="value-cell">£16.5m</td><td class="value-cell">£21.0m</td><td class="value-cell">£26.3m</td><td class="value-cell">£32.1m</td><td class="value-cell">£37.5m</td></tr>
+          <tr><td class="label-cell">Gross Profit</td><td class="value-cell">£4.2m</td><td class="value-cell">£5.6m</td><td class="value-cell">£7.4m</td><td class="value-cell">£9.5m</td><td class="value-cell">£11.6m</td><td class="value-cell">£13.9m</td></tr>
+          <tr><td class="label-cell">Net Profit</td><td class="value-cell">£864k</td><td class="value-cell">£1.41m</td><td class="value-cell">£2.31m</td><td class="value-cell">£3.61m</td><td class="value-cell">£4.87m</td><td class="value-cell">£6.37m</td></tr>
+          <tr><td class="label-cell">GM %</td><td class="value-cell">33.9%</td><td class="value-cell">34.0%</td><td class="value-cell">35.0%</td><td class="value-cell">36.0%</td><td class="value-cell">36.0%</td><td class="value-cell">37.0%</td></tr>
+          <tr><td class="label-cell">Net Margin</td><td class="value-cell">6.9%</td><td class="value-cell">8.6%</td><td class="value-cell">11.0%</td><td class="value-cell">13.8%</td><td class="value-cell">15.2%</td><td class="value-cell">17.0%</td></tr>
+          <tr><td class="label-cell">Closing Cash</td><td class="value-cell">£800k</td><td class="value-cell">£1.72m</td><td class="value-cell">£3.46m</td><td class="value-cell">£6.45m</td><td class="value-cell">£10.6m</td><td class="value-cell">£16.2m</td></tr>
+          <tr><td class="label-cell">Headcount</td><td class="value-cell">50</td><td class="value-cell">70</td><td class="value-cell">95</td><td class="value-cell">120</td><td class="value-cell">145</td><td class="value-cell">170+</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== REVENUE STRATEGY ===== -->
+  <div class="tab-content" id="revenue">
+    <div class="section-title"><h2>Revenue Mix by Strategic Pillar</h2><p>Shifting from project-heavy to recurring revenue model</p></div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">FY27 Revenue by Pillar (£16.5m)</div><canvas id="pillarPie"></canvas></div>
+      <div class="card"><div class="card-title">Pillar Mix Shift — FY26 vs FY31 (%)</div><canvas id="pillarShift"></canvas></div>
+    </div>
+
+    <div class="section-title"><h2>FM Client Revenue Build (£m)</h2><p>Target: 12 FM frameworks generating £13.5m by FY31</p></div>
+    <div class="card"><canvas id="fmClients"></canvas></div>
+
+    <div class="section-title"><h2>Recurring vs Project Revenue (£m)</h2><p>Target: 65%+ recurring revenue by FY31</p></div>
+    <div class="card"><canvas id="recurringChart"></canvas></div>
+  </div>
+
+  <!-- ===== P&L FEB 2026 ===== -->
+  <div class="tab-content" id="pl">
+    <div class="grid-3">
+      <div class="card-accent" style="border-left: 3px solid #2563eb;"><div class="ca-label">Turnover</div><div class="ca-value">£990,643</div></div>
+      <div class="card-accent" style="border-left: 3px solid #16a34a;"><div class="ca-label">Gross Profit</div><div class="ca-value">£368,476</div><div class="ca-sub" style="color:#16a34a;">37.2% GM</div></div>
+      <div class="card-accent" style="border-left: 3px solid #059669;"><div class="ca-label">Operating Profit</div><div class="ca-value">£55,730</div><div class="ca-sub" style="color:#059669;">5.6% NM</div></div>
+    </div>
+
+    <div class="grid-2" style="margin-top:24px;">
+      <div class="card"><div class="card-title">P&L Waterfall — Feb 2026</div><canvas id="plWaterfall"></canvas></div>
+      <div class="card"><div class="card-title">Revenue by Type — Feb 2026</div><canvas id="revTypePie"></canvas></div>
+    </div>
+
+    <div class="section-title"><h2>Top Direct Costs</h2><p>Largest cost of sales items — Feb 2026</p></div>
+    <div class="card"><canvas id="topCosts"></canvas></div>
+
+    <div class="section-title"><h2>Top Overhead Items</h2><p>Total admin costs: £322,014 (32.5% of revenue)</p></div>
+    <div class="card"><canvas id="topOverheads"></canvas></div>
+  </div>
+
+  <!-- ===== CASHFLOW ===== -->
+  <div class="tab-content" id="cash">
+    <div class="grid-3">
+      <div class="card-accent" style="border-left: 3px solid #475569;"><div class="ca-label">Opening Cash (FY27)</div><div class="ca-value">£800k</div></div>
+      <div class="card-accent" style="border-left: 3px solid #16a34a;"><div class="ca-label">Closing Cash (FY31)</div><div class="ca-value">£16.24m</div></div>
+      <div class="card-accent" style="border-left: 3px solid #2563eb;"><div class="ca-label">5-Year Net Cash Generated</div><div class="ca-value">£15.44m</div></div>
+    </div>
+
+    <div class="section-title"><h2>Cash Balance Trajectory</h2><p>Cash balance growing from £800k to £16.2m over five years</p></div>
+    <div class="card"><canvas id="cashTrajectory"></canvas></div>
+
+    <div class="section-title"><h2>Annual Cash Movement</h2><p>Net cash generated improving year on year</p></div>
+    <div class="card"><canvas id="cashMovement"></canvas></div>
+
+    <div class="section-title"><h2>Cash Assumptions</h2></div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table>
+        <thead><tr><th style="text-align:left">Assumption</th><th style="text-align:right">FY27</th><th style="text-align:right">FY28</th><th style="text-align:right">FY29</th><th style="text-align:right">FY30</th><th style="text-align:right">FY31</th></tr></thead>
+        <tbody>
+          <tr><td class="label-cell">Debtor Days</td><td class="value-cell">52</td><td class="value-cell">52</td><td class="value-cell">50</td><td class="value-cell">48</td><td class="value-cell">45</td></tr>
+          <tr><td class="label-cell">Creditor Days</td><td class="value-cell">30</td><td class="value-cell">30</td><td class="value-cell">30</td><td class="value-cell">30</td><td class="value-cell">30</td></tr>
+          <tr><td class="label-cell">Capital Expenditure</td><td class="value-cell">£120k</td><td class="value-cell">£180k</td><td class="value-cell">£200k</td><td class="value-cell">£250k</td><td class="value-cell">£300k</td></tr>
+          <tr><td class="label-cell">People Investment</td><td class="value-cell">£180k</td><td class="value-cell">£370k</td><td class="value-cell">£370k</td><td class="value-cell">£440k</td><td class="value-cell">£440k</td></tr>
+          <tr><td class="label-cell">Corporation Tax</td><td class="value-cell">25%</td><td class="value-cell">25%</td><td class="value-cell">25%</td><td class="value-cell">25%</td><td class="value-cell">25%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer"><p>RMLFS Ltd — Finance Dashboard | Data: Feb 2026 P&L + FY27-31 Revenue & Cashflow Forecast</p></div>
+
+<script>
+// Tab switching
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Chart.js defaults
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#334155';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.tooltip.backgroundColor = '#1e293b';
+Chart.defaults.plugins.tooltip.borderColor = '#475569';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+Chart.defaults.scale.grid = { color: '#1e293b' };
+
+const years = ['FY26','FY27','FY28','FY29','FY30','FY31'];
+
+// Revenue & Profit Chart
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: years,
+    datasets: [
+      { label: 'Revenue', data: [12.5,16.5,21,26.25,32.1,37.45], backgroundColor: 'rgba(37,99,235,0.75)', borderRadius: 4, order: 2 },
+      { label: 'Gross Profit', data: [4.24,5.61,7.35,9.45,11.56,13.86], backgroundColor: 'rgba(13,148,136,0.75)', borderRadius: 4, order: 2 },
+      { label: 'Net Profit', data: [0.86,1.41,2.31,3.61,4.87,6.37], type: 'line', borderColor: '#16a34a', backgroundColor: '#16a34a', pointRadius: 5, pointBackgroundColor: '#16a34a', borderWidth: 2.5, tension: 0.3, order: 1 }
+    ]
+  },
+  options: { scales: { y: { ticks: { callback: v => `£${v}m` } } }, plugins: { legend: { position: 'bottom' } } }
+});
+
+// Margin Chart
+new Chart(document.getElementById('marginChart'), {
+  type: 'line',
+  data: {
+    labels: years,
+    datasets: [
+      { label: 'Gross Margin', data: [33.9,34,35,36,36,37], borderColor: '#2563eb', backgroundColor: '#2563eb', pointRadius: 5, borderWidth: 2.5, tension: 0.3 },
+      { label: 'Operating Margin', data: [8.3,10.7,14.1,17.9,19.9,22.4], borderColor: '#7c3aed', backgroundColor: '#7c3aed', pointRadius: 5, borderWidth: 2.5, tension: 0.3 },
+      { label: 'Net Margin', data: [6.9,8.6,11,13.8,15.2,17], borderColor: '#16a34a', backgroundColor: '#16a34a', pointRadius: 5, borderWidth: 2.5, tension: 0.3 }
+    ]
+  },
+  options: { scales: { y: { min: 0, max: 40, ticks: { callback: v => `${v}%` } } }, plugins: { legend: { position: 'bottom' } } }
+});
+
+// Pillar Pie
+new Chart(document.getElementById('pillarPie'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Re-roofing & Refurb','Planned Maintenance','FM Contracts','Reactive/Emergency','Multi-site Retail','Ireland','Net-Zero/Retrofit'],
+    datasets: [{ data: [4950,4620,2970,1980,1155,495,330], backgroundColor: ['#f59e0b','#0d9488','#2563eb','#dc2626','#7c3aed','#059669','#ea580c'], borderWidth: 0, hoverOffset: 8 }]
+  },
+  options: { cutout: '55%', plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 12 } }, tooltip: { callbacks: { label: ctx => `${ctx.label}: £${(ctx.parsed/1000).toFixed(1)}k (${Math.round(ctx.parsed/165)}%)` } } } }
+});
+
+// Pillar Shift
+new Chart(document.getElementById('pillarShift'), {
+  type: 'bar',
+  data: {
+    labels: ['FM Contracts','Multi-site\nRetail','Planned\nMaint','Re-roof &\nRefurb','Reactive','Ireland','Net-Zero'],
+    datasets: [
+      { label: 'FY26', data: [15,5,30,35,15,0,0], backgroundColor: '#475569', borderRadius: 3 },
+      { label: 'FY31', data: [30,12,20,20,8,12,5], backgroundColor: '#2563eb', borderRadius: 3 }
+    ]
+  },
+  options: { indexAxis: 'y', scales: { x: { ticks: { callback: v => `${v}%` } } }, plugins: { legend: { position: 'bottom' } } }
+});
+
+// FM Clients
+new Chart(document.getElementById('fmClients'), {
+  type: 'bar',
+  data: {
+    labels: ['Mitie','CBRE','Equans','ISS UK','Sodexo','JLL / Other'],
+    datasets: [
+      { label: 'FY27', data: [1.5,1.0,0.5,0,0,0], backgroundColor: '#334155', borderRadius: 3 },
+      { label: 'FY28', data: [2.0,1.63,0.5,0.63,0.13,0], backgroundColor: '#475569', borderRadius: 3 },
+      { label: 'FY29', data: [2.5,2.13,0.5,1.25,0.75,0.5], backgroundColor: '#0d9488', borderRadius: 3 },
+      { label: 'FY30', data: [3.2,2.75,1.0,1.75,1.25,1.25], backgroundColor: '#2563eb', borderRadius: 3 },
+      { label: 'FY31', data: [4.0,3.5,1.0,2.0,1.5,1.5], backgroundColor: '#7c3aed', borderRadius: 4 }
+    ]
+  },
+  options: { scales: { y: { ticks: { callback: v => `£${v}m` } } }, plugins: { legend: { position: 'bottom' } } }
+});
+
+// Recurring vs Project
+new Chart(document.getElementById('recurringChart'), {
+  type: 'bar',
+  data: {
+    labels: ['FY27','FY28','FY29','FY30','FY31'],
+    datasets: [
+      { label: 'Recurring', data: [10.73,14.07,17.5,21.3,24.5], backgroundColor: '#2563eb', borderRadius: 0 },
+      { label: 'Project', data: [5.78,6.93,8.75,10.8,12.95], backgroundColor: '#7c3aed', borderRadius: {topLeft:4,topRight:4} }
+    ]
+  },
+  options: { scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => `£${v}m` } } }, plugins: { legend: { position: 'bottom' } } }
+});
+
+// P&L Waterfall
+new Chart(document.getElementById('plWaterfall'), {
+  type: 'bar',
+  data: {
+    labels: ['Turnover','Cost of Sales','Gross Profit','Admin Costs','Other Income','Op. Profit'],
+    datasets: [{ data: [991,622,368,322,9,56], backgroundColor: ['#2563eb','#dc2626','#16a34a','#f59e0b','#0d9488','#059669'], borderRadius: 4 }]
+  },
+  options: { scales: { y: { ticks: { callback: v => `£${v}k` } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `£${ctx.parsed.y}k` } } } }
+});
+
+// Revenue Type Pie
+new Chart(document.getElementById('revTypePie'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Project Sales (53%)','Call Out Sales (24%)','Small Work Sales (14%)','Small Project Sales (9%)'],
+    datasets: [{ data: [525,241,139,86], backgroundColor: ['#2563eb','#7c3aed','#0d9488','#f59e0b'], borderWidth: 0, hoverOffset: 8 }]
+  },
+  options: { cutout: '55%', plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 12 } }, tooltip: { callbacks: { label: ctx => `£${ctx.parsed}k` } } } }
+});
+
+// Top Costs
+new Chart(document.getElementById('topCosts'), {
+  type: 'bar',
+  data: {
+    labels: ['CIS Labour','Scaffold','Wages (Labour)','Materials','Coating','Powered Access','Insulation','Construction'],
+    datasets: [{ data: [122,74,65,56,35,29,29,27], backgroundColor: 'rgba(220,38,38,0.65)', borderRadius: 3 }]
+  },
+  options: { indexAxis: 'y', scales: { x: { ticks: { callback: v => `£${v}k` } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `£${ctx.parsed.x}k` } } } }
+});
+
+// Top Overheads
+new Chart(document.getElementById('topOverheads'), {
+  type: 'bar',
+  data: {
+    labels: ['Admin Wages','NI (Overhead)','Depreciation (MV)','Dinner Money','Travel','Business Insurance','HP Interest','Entertainment','Hotel (OH)','Fleet Insurance'],
+    datasets: [{ data: [157,23,19,12,8.5,8.1,7.4,7.0,7.0,5.1], backgroundColor: 'rgba(245,158,11,0.65)', borderRadius: 3 }]
+  },
+  options: { indexAxis: 'y', scales: { x: { ticks: { callback: v => `£${v}k` } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `£${ctx.parsed.x}k` } } } }
+});
+
+// Cash Trajectory
+new Chart(document.getElementById('cashTrajectory'), {
+  type: 'line',
+  data: {
+    labels: years,
+    datasets: [{
+      label: 'Closing Cash',
+      data: [0.8,1.72,3.46,6.45,10.59,16.24],
+      borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.15)',
+      fill: true, pointRadius: 6, pointBackgroundColor: '#16a34a', borderWidth: 2.5, tension: 0.3
+    }]
+  },
+  options: { scales: { y: { ticks: { callback: v => `£${v}m` } } }, plugins: { legend: { display: false } } }
+});
+
+// Cash Movement
+new Chart(document.getElementById('cashMovement'), {
+  type: 'bar',
+  data: {
+    labels: ['FY27','FY28','FY29','FY30','FY31'],
+    datasets: [{ label: 'Net Cash Generated', data: [0.92,1.75,2.99,4.13,5.65], backgroundColor: 'rgba(37,99,235,0.75)', borderRadius: 6 }]
+  },
+  options: { scales: { y: { ticks: { callback: v => `£${v}m` } } }, plugins: { legend: { display: false } } }
+});
+</script>
+
+</body>
+</html>
