@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RMLFS Group CEO Command Center</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #0f1117;
+            color: #e4e4e7;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background-color: #0f1117;
+            border-bottom: 1px solid #2a2d3a;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background-color: #1a1d27;
+            border: 1px solid #2a2d3a;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.live {
+            background-color: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        .badge.live::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-date {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            position: sticky;
+            top: 68px;
+            background-color: #0f1117;
+            border-bottom: 1px solid #2a2d3a;
+            display: flex;
+            gap: 0;
+            padding: 0 24px;
+            z-index: 99;
+        }
+
+        .tab {
+            padding: 16px 20px;
+            border: none;
+            background: none;
+            color: #9ca3af;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: #e4e4e7;
+        }
+
+        .tab.active {
+            color: #e4e4e7;
+            border-bottom-color: #6366f1;
+        }
+
+        .tab.sales.active {
+            border-bottom-color: #6366f1;
+        }
+
+        .tab.projects.active {
+            border-bottom-color: #22c55e;
+        }
+
+        .tab.maintenance.active {
+            border-bottom-color: #f59e0b;
+        }
+
+        .tab.finance.active {
+            border-bottom-color: #a855f7;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Layout & Grid */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background-color: #1a1d27;
+            border: 1px solid #2a2d3a;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #e4e4e7;
+        }
+
+        .kpi-subtext {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #2a2d3a;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #6366f1;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Pillar Health */
+        .pillar-health {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .pillar-chip {
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .pillar-chip.green {
+            background-color: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+        }
+
+        .pillar-chip.red {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .pillar-chip.amber {
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid #f59e0b;
+            color: #f59e0b;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #e4e4e7;
+        }
+
+        .chart-container {
+            background-color: #1a1d27;
+            border: 1px solid #2a2d3a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Tables */
+        .table-container {
+            background-color: #1a1d27;
+            border: 1px solid #2a2d3a;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #13161f;
+            border-bottom: 1px solid #2a2d3a;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+        }
+
+        td {
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #e4e4e7;
+            border-bottom: 1px solid #2a2d3a;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background-color: #13161f;
+        }
+
+        /* RAG Indicators */
+        .rag-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .rag-dot.green {
+            background-color: #22c55e;
+        }
+
+        .rag-dot.amber {
+            background-color: #f59e0b;
+        }
+
+        .rag-dot.red {
+            background-color: #ef4444;
+        }
+
+        /* Alerts */
+        .alerts-section {
+            margin-top: 32px;
+        }
+
+        .alert {
+            background-color: #1a1d27;
+            border-left: 4px solid #6366f1;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .alert.red {
+            border-left-color: #ef4444;
+            background-color: rgba(239, 68, 68, 0.05);
+        }
+
+        .alert.amber {
+            border-left-color: #f59e0b;
+            background-color: rgba(245, 158, 11, 0.05);
+        }
+
+        .alert.green {
+            border-left-color: #22c55e;
+            background-color: rgba(34, 197, 94, 0.05);
+        }
+
+        .alert-icon {
+            font-weight: 700;
+            min-width: 24px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .alert-message {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        /* Funnel */
+        .funnel-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .funnel-stage {
+            background-color: #1a1d27;
+            border: 1px solid #2a2d3a;
+            border-radius: 6px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .funnel-bar {
+            flex: 1;
+            height: 32px;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.1));
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .funnel-label {
+            width: 140px;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .funnel-value {
+            width: 80px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        /* Grid for items */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        /* Fleet Grid */
+        .fleet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .fleet-unit {
+            background-color: #1a1d27;
+            border: 1px solid #2a2d3a;
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .fleet-unit-id {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .fleet-unit-status {
+            font-size: 11px;
+            color: #9ca3af;
+            background-color: #13161f;
+            padding: 6px;
+            border-radius: 4px;
+        }
+
+        /* Two Column Layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .kpi-row {
+                grid-template-columns: 1fr;
+            }
+
+            .pillar-chip {
+                min-width: auto;
+            }
+
+            .tab {
+                padding: 12px 12px;
+                font-size: 12px;
+            }
+
+            .container {
+                padding: 16px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 12px;
+            }
+        }
+
+        /* Summary Stats */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-stat {
+            background-color: #1a1d27;
+            border: 1px solid #2a2d3a;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .summary-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .summary-stat-label {
+            font-size: 11px;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="header-title">RMLFS Group — CEO Command Center</div>
+            <div class="badge live">LIVE DATA</div>
+        </div>
+        <div class="header-date" id="currentDate">23 March 2026</div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+        <button class="tab sales active" onclick="switchTab('overview')">Group Overview</button>
+        <button class="tab sales" onclick="switchTab('sales')">Sales</button>
+        <button class="tab projects" onclick="switchTab('projects')">Projects</button>
+        <button class="tab maintenance" onclick="switchTab('maintenance')">Maintenance</button>
+        <button class="tab finance" onclick="switchTab('finance')">Finance</button>
+    </div>
+
+    <!-- Content Area -->
+    <div class="container">
+
+        <!-- TAB 1: GROUP OVERVIEW -->
+        <div id="overview" class="tab-content active">
+            <!-- Pillar Health -->
+            <div class="pillar-health">
+                <div class="pillar-chip green"><span>✓</span> Sales: £23M Pipeline</div>
+                <div class="pillar-chip amber"><span>!</span> Projects: Margin Watch</div>
+                <div class="pillar-chip green"><span>✓</span> Maintenance: On Track</div>
+                <div class="pillar-chip amber"><span>!</span> Finance: Cost Focus</div>
+            </div>
+
+            <!-- Top KPIs -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Monthly Revenue</div>
+                    <div class="kpi-value">£990,643</div>
+                    <div class="kpi-subtext">4.9% below target</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 95%;"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Gross Margin</div>
+                    <div class="kpi-value">37.2%</div>
+                    <div class="kpi-subtext">3.3pts above target</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 110%; background-color: #22c55e;"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Net Profit</div>
+                    <div class="kpi-value">£55,730</div>
+                    <div class="kpi-subtext">22.6% below target</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 77.4%; background-color: #ef4444;"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Sales Pipeline</div>
+                    <div class="kpi-value">£23M</div>
+                    <div class="kpi-subtext">190+ active deals</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 100%; background-color: #6366f1;"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Projects Value</div>
+                    <div class="kpi-value">£480,016</div>
+                    <div class="kpi-subtext">9 live projects</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 100%; background-color: #22c55e;"></div></div>
+                </div>
+            </div>
+
+            <!-- 5-Year Growth Strategy -->
+            <div class="section">
+                <div class="section-title">5-Year Growth Strategy</div>
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Margin Improvement -->
+            <div class="section">
+                <div class="section-title">Margin & Profit Trajectory</div>
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="marginChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5-Year Financial Snapshot -->
+            <div class="section">
+                <div class="section-title">5-Year Financial Forecast</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Revenue</th>
+                                <th>Gross Margin %</th>
+                                <th>Operating Margin %</th>
+                                <th>Net Profit</th>
+                                <th>Closing Cash</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>FY26 (Target)</td>
+                                <td>£12.5M</td>
+                                <td>33.9%</td>
+                                <td>6.9%</td>
+                                <td>£864K</td>
+                                <td>£800K</td>
+                            </tr>
+                            <tr>
+                                <td>FY27</td>
+                                <td>£16.5M</td>
+                                <td>34.0%</td>
+                                <td>8.6%</td>
+                                <td>£1,410K</td>
+                                <td>£1,720K</td>
+                            </tr>
+                            <tr>
+                                <td>FY28</td>
+                                <td>£21.0M</td>
+                                <td>35.0%</td>
+                                <td>11.0%</td>
+                                <td>£2,310K</td>
+                                <td>£3,460K</td>
+                            </tr>
+                            <tr>
+                                <td>FY29</td>
+                                <td>£26.25M</td>
+                                <td>36.0%</td>
+                                <td>13.8%</td>
+                                <td>£3,610K</td>
+                                <td>£6,450K</td>
+                            </tr>
+                            <tr>
+                                <td>FY30</td>
+                                <td>£32.1M</td>
+                                <td>36.0%</td>
+                                <td>15.2%</td>
+                                <td>£4,870K</td>
+                                <td>£10,590K</td>
+                            </tr>
+                            <tr>
+                                <td>FY31</td>
+                                <td>£37.45M</td>
+                                <td>37.0%</td>
+                                <td>17.0%</td>
+                                <td>£6,370K</td>
+                                <td>£16,240K</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="section alerts-section">
+                <div class="section-title">Critical Alerts & Opportunities</div>
+
+                <div class="alert red">
+                    <div class="alert-icon">⚠</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Net Profit Under Target (22.6% below plan)</div>
+                        <div class="alert-message">Admin costs at £322K are the primary driver. Review headcount, discretionary spend, and SG&A efficiency.</div>
+                    </div>
+                </div>
+
+                <div class="alert red">
+                    <div class="alert-icon">⚠</div>
+                    <div class="alert-content">
+                        <div class="alert-title">BM Dallas Project at Risk</div>
+                        <div class="alert-message">25% margin (well below 33.9% target), RAG Red, forecast completion slipping to 17 April. Requires immediate PM review.</div>
+                    </div>
+                </div>
+
+                <div class="alert amber">
+                    <div class="alert-icon">!</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Monthly Revenue 4.9% Below Target</div>
+                        <div class="alert-message">£990K actual vs £1.04M target. Annualised run rate £11.9M vs £12.5M plan. Sales pipeline remains strong at £23M.</div>
+                    </div>
+                </div>
+
+                <div class="alert amber">
+                    <div class="alert-icon">!</div>
+                    <div class="alert-content">
+                        <div class="alert-title">TK Maxx Project Status</div>
+                        <div class="alert-message">£0 contract value, Amber RAG status. Clarify scope, timeline, and revenue recognition with Jack Gillam (PM).</div>
+                    </div>
+                </div>
+
+                <div class="alert green">
+                    <div class="alert-icon">✓</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Gross Margin Beating Target</div>
+                        <div class="alert-message">37.2% actual vs 33.9% target—3.3 percentage points above forecast. Strong cost control and mix.</div>
+                    </div>
+                </div>
+
+                <div class="alert">
+                    <div class="alert-icon">ℹ</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Maintenance Data Sync Pending</div>
+                        <div class="alert-message">Gang deployment and CP fleet data not yet populated in Monday.com. Planning Excel shows 16 gangs & £119K weekly revenue (above £100K target).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: SALES -->
+        <div id="sales" class="tab-content">
+            <!-- KPI Row -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Pipeline</div>
+                    <div class="kpi-value">£23M</div>
+                    <div class="kpi-subtext">190+ active deals</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Awaiting Order</div>
+                    <div class="kpi-value">£753K</div>
+                    <div class="kpi-subtext">5 deals</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Hot Deals</div>
+                    <div class="kpi-value">£649K</div>
+                    <div class="kpi-subtext">5 deals</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Quotes Sent</div>
+                    <div class="kpi-value">£18.2M</div>
+                    <div class="kpi-subtext">140+ deals</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">In Discussion</div>
+                    <div class="kpi-value">£3.4M</div>
+                    <div class="kpi-subtext">38 deals</div>
+                </div>
+            </div>
+
+            <!-- Pipeline Funnel -->
+            <div class="section">
+                <div class="section-title">Pipeline by Stage</div>
+                <div class="funnel-container">
+                    <div class="funnel-stage">
+                        <div class="funnel-label">Quote Sent</div>
+                        <div class="funnel-bar" style="width: 70%;">
+                            <span>140+ deals</span>
+                        </div>
+                        <div class="funnel-value">£18.2M</div>
+                    </div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">Conversation</div>
+                        <div class="funnel-bar" style="width: 50%;">
+                            <span>22 deals</span>
+                        </div>
+                        <div class="funnel-value">£1.5M</div>
+                    </div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">Interested</div>
+                        <div class="funnel-bar" style="width: 40%;">
+                            <span>16 deals</span>
+                        </div>
+                        <div class="funnel-value">£1.9M</div>
+                    </div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">Awaiting Order</div>
+                        <div class="funnel-bar" style="width: 15%;">
+                            <span>5 deals</span>
+                        </div>
+                        <div class="funnel-value">£753K</div>
+                    </div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">Hot Deal</div>
+                        <div class="funnel-bar" style="width: 15%;">
+                            <span>5 deals</span>
+                        </div>
+                        <div class="funnel-value">£649K</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Clients -->
+            <div class="section">
+                <div class="section-title">Top 5 Clients by Pipeline Value</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Pipeline Value</th>
+                                <th>Deal Count</th>
+                                <th>Primary Stage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>B&M</td>
+                                <td>£4.5M</td>
+                                <td>Multiple stores</td>
+                                <td>Quote Sent / Awaiting Order</td>
+                            </tr>
+                            <tr>
+                                <td>Dan Foss</td>
+                                <td>£2.54M</td>
+                                <td>8-10</td>
+                                <td>Quote Sent</td>
+                            </tr>
+                            <tr>
+                                <td>CBRE (Cencora)</td>
+                                <td>£1.9M</td>
+                                <td>5-6</td>
+                                <td>Quote Sent</td>
+                            </tr>
+                            <tr>
+                                <td>JD Sports</td>
+                                <td>£1.1M</td>
+                                <td>4-5</td>
+                                <td>Quote Sent</td>
+                            </tr>
+                            <tr>
+                                <td>TJX Europe (TK Maxx)</td>
+                                <td>£800K</td>
+                                <td>3-4</td>
+                                <td>Quote Sent</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sales Team Pipeline -->
+            <div class="section">
+                <div class="section-title">Sales Team Pipeline Allocation</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sales Rep</th>
+                                <th>Pipeline Value</th>
+                                <th>Deal Count</th>
+                                <th>Target</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Unassigned</td>
+                                <td>£17M</td>
+                                <td>~95</td>
+                                <td>—</td>
+                            </tr>
+                            <tr>
+                                <td>Stephen Housley</td>
+                                <td>£3.5M</td>
+                                <td>~20</td>
+                                <td>£5M</td>
+                            </tr>
+                            <tr>
+                                <td>David Gillam</td>
+                                <td>£700K</td>
+                                <td>~8</td>
+                                <td>£1.2M</td>
+                            </tr>
+                            <tr>
+                                <td>James Shields</td>
+                                <td>£700K</td>
+                                <td>~8</td>
+                                <td>£1.2M</td>
+                            </tr>
+                            <tr>
+                                <td>Grace Woodley</td>
+                                <td>£600K</td>
+                                <td>~5</td>
+                                <td>£800K</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sales Alerts -->
+            <div class="section alerts-section">
+                <div class="section-title">Sales Focus Areas</div>
+                <div class="alert amber">
+                    <div class="alert-icon">!</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Significant Unassigned Pipeline</div>
+                        <div class="alert-message">£17M (74% of pipeline) remains unassigned. Prioritise allocation to sales team to improve conversion tracking and accountability.</div>
+                    </div>
+                </div>
+                <div class="alert green">
+                    <div class="alert-icon">✓</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Strong Major Account Pipeline</div>
+                        <div class="alert-message">Top 5 clients represent £10.84M. B&M, Dan Foss, and CBRE are key growth drivers with high quote volumes.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PROJECTS -->
+        <div id="projects" class="tab-content">
+            <!-- KPI Row -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Live Projects</div>
+                    <div class="kpi-value">9</div>
+                    <div class="kpi-subtext">All active</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Value</div>
+                    <div class="kpi-value">£480,016</div>
+                    <div class="kpi-subtext">Contract value</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Margin</div>
+                    <div class="kpi-value">42.4%</div>
+                    <div class="kpi-subtext">Excl. TK Maxx</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">RAG Status</div>
+                    <div class="kpi-value">7/1/1</div>
+                    <div class="kpi-subtext">Green/Amber/Red</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Invoiced</div>
+                    <div class="kpi-value">£73,238</div>
+                    <div class="kpi-subtext">15.3% of value</div>
+                </div>
+            </div>
+
+            <!-- Projects Table -->
+            <div class="section">
+                <div class="section-title">Project Portfolio</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Client</th>
+                                <th>PM</th>
+                                <th>Contract Value</th>
+                                <th>Margin %</th>
+                                <th>Completion %</th>
+                                <th>Invoiced</th>
+                                <th>RAG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TK Maxx</td>
+                                <td>TK Maxx</td>
+                                <td>Jack Gillam</td>
+                                <td>£0</td>
+                                <td>0%</td>
+                                <td>0%</td>
+                                <td>£0</td>
+                                <td><span class="rag-dot amber"></span>Amber</td>
+                            </tr>
+                            <tr>
+                                <td>Premier – Northwich</td>
+                                <td>Premier</td>
+                                <td>Jack Gillam</td>
+                                <td>£55,620</td>
+                                <td>50.1%</td>
+                                <td>100%</td>
+                                <td>£55,620</td>
+                                <td><span class="rag-dot green"></span>Green</td>
+                            </tr>
+                            <tr>
+                                <td>Eaton House</td>
+                                <td>Eaton House</td>
+                                <td>Ciaran</td>
+                                <td>£70,543</td>
+                                <td>44%</td>
+                                <td>70%</td>
+                                <td>£0</td>
+                                <td><span class="rag-dot green"></span>Green</td>
+                            </tr>
+                            <tr>
+                                <td>Mountain Warehouse</td>
+                                <td>Mountain Warehouse</td>
+                                <td>Jack Gillam</td>
+                                <td>£33,484</td>
+                                <td>54.7%</td>
+                                <td>70%</td>
+                                <td>£0</td>
+                                <td><span class="rag-dot green"></span>Green</td>
+                            </tr>
+                            <tr style="background-color: rgba(239, 68, 68, 0.05);">
+                                <td><strong>BM Dallas</strong></td>
+                                <td>BM Dallas</td>
+                                <td>Jack Gillam</td>
+                                <td>£35,237</td>
+                                <td>25%</td>
+                                <td>40%</td>
+                                <td>£17,618</td>
+                                <td><span class="rag-dot red"></span>Red</td>
+                            </tr>
+                            <tr>
+                                <td>Poundland</td>
+                                <td>Poundland</td>
+                                <td>Mike Adams</td>
+                                <td>£68,058</td>
+                                <td>54%</td>
+                                <td>95%</td>
+                                <td>£0</td>
+                                <td><span class="rag-dot green"></span>Green</td>
+                            </tr>
+                            <tr>
+                                <td>Go Outdoors</td>
+                                <td>Go Outdoors</td>
+                                <td>Jack Gillam</td>
+                                <td>£60,114</td>
+                                <td>38.4%</td>
+                                <td>0%</td>
+                                <td>£0</td>
+                                <td><span class="rag-dot green"></span>Green</td>
+                            </tr>
+                            <tr>
+                                <td>Low Bridge</td>
+                                <td>Low Bridge</td>
+                                <td>Ciaran</td>
+                                <td>£134,216</td>
+                                <td>40%</td>
+                                <td>0%</td>
+                                <td>£0</td>
+                                <td><span class="rag-dot green"></span>Green</td>
+                            </tr>
+                            <tr>
+                                <td>Ian B – Dumfries</td>
+                                <td>Ian B</td>
+                                <td>Ciaran</td>
+                                <td>£22,744</td>
+                                <td>35%</td>
+                                <td>0%</td>
+                                <td>£0</td>
+                                <td><span class="rag-dot green"></span>Green</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PM Workload -->
+            <div class="section">
+                <div class="section-title">Project Manager Workload</div>
+                <div class="summary-stats">
+                    <div class="summary-stat">
+                        <div class="summary-stat-value">5</div>
+                        <div class="summary-stat-label">Jack Gillam</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-value">3</div>
+                        <div class="summary-stat-label">Ciaran</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-value">1</div>
+                        <div class="summary-stat-label">Mike Adams</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Alerts -->
+            <div class="section alerts-section">
+                <div class="section-title">Project Status & Actions</div>
+                <div class="alert red">
+                    <div class="alert-icon">⚠</div>
+                    <div class="alert-content">
+                        <div class="alert-title">BM Dallas Project at Critical Risk</div>
+                        <div class="alert-message">25% margin, RAG Red, 40% complete. Well below 42.4% portfolio average. Forecast end date slipping to 17 April. Immediate PM review required.</div>
+                    </div>
+                </div>
+                <div class="alert amber">
+                    <div class="alert-icon">!</div>
+                    <div class="alert-content">
+                        <div class="alert-title">TK Maxx Project Needs Clarification</div>
+                        <div class="alert-message">£0 contract value and Amber RAG status. Clarify scope, timeline, and revenue recognition with Jack Gillam.</div>
+                    </div>
+                </div>
+                <div class="alert green">
+                    <div class="alert-icon">✓</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Strong Portfolio Health</div>
+                        <div class="alert-message">7 of 9 projects Green. Average margin of 42.4% above company target. Low Bridge and Poundland near completion milestones.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: MAINTENANCE -->
+        <div id="maintenance" class="tab-content">
+            <!-- KPI Row -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Weekly Revenue</div>
+                    <div class="kpi-value">£119K</div>
+                    <div class="kpi-subtext">Planned (Excel)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Target</div>
+                    <div class="kpi-value">£100K</div>
+                    <div class="kpi-subtext">19% above</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Gangs Deployed</div>
+                    <div class="kpi-value">16</div>
+                    <div class="kpi-subtext">This week</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Man Days</div>
+                    <div class="kpi-value">~60</div>
+                    <div class="kpi-subtext">Calculated</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Value per Man Day</div>
+                    <div class="kpi-value">£2,000</div>
+                    <div class="kpi-subtext">Standard</div>
+                </div>
+            </div>
+
+            <!-- Equipment Hire -->
+            <div class="section">
+                <div class="section-title">Equipment Hire – Week of 23 March</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th>Location</th>
+                                <th>Supplier</th>
+                                <th>Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>B&M Northallerton – 80ft</td>
+                                <td>80ft Cherry Picker</td>
+                                <td>B&M Northallerton</td>
+                                <td>Hire Safe</td>
+                                <td>£757</td>
+                            </tr>
+                            <tr>
+                                <td>B&M Blackburn Peel Centre – 80ft</td>
+                                <td>80ft Cherry Picker</td>
+                                <td>B&M Blackburn</td>
+                                <td>Hire Safe</td>
+                                <td>£757</td>
+                            </tr>
+                            <tr>
+                                <td>B&M Neath – Scissor</td>
+                                <td>Scissor Lift</td>
+                                <td>B&M Neath</td>
+                                <td>Hire Safe</td>
+                                <td>£480</td>
+                            </tr>
+                            <tr>
+                                <td>B&M Berwick – z30</td>
+                                <td>z30 Boom Lift</td>
+                                <td>B&M Berwick</td>
+                                <td>Hire Safe</td>
+                                <td>£435</td>
+                            </tr>
+                            <tr>
+                                <td>JD Weymouth – Skip</td>
+                                <td>Skip</td>
+                                <td>JD Weymouth</td>
+                                <td>Coast 2 Coast</td>
+                                <td>£420</td>
+                            </tr>
+                            <tr>
+                                <td>B&M Bicester – Skip</td>
+                                <td>Skip</td>
+                                <td>B&M Bicester</td>
+                                <td>Kenny Waste</td>
+                                <td>£375</td>
+                            </tr>
+                            <tr>
+                                <td>TKM Chesterfield – Star 10</td>
+                                <td>Star 10</td>
+                                <td>TKM Chesterfield</td>
+                                <td>Hire Safe</td>
+                                <td>£372</td>
+                            </tr>
+                            <tr>
+                                <td>TK Maxx Runcorn – 60ft</td>
+                                <td>60ft Cherry Picker</td>
+                                <td>TK Maxx Runcorn</td>
+                                <td>Hire Safe</td>
+                                <td>£324</td>
+                            </tr>
+                            <tr>
+                                <td>B&M Bicester – Heras</td>
+                                <td>Heras Fencing</td>
+                                <td>B&M Bicester</td>
+                                <td>Speedy</td>
+                                <td>£6</td>
+                            </tr>
+                            <tr>
+                                <td>B&M Irvine – Alloy Tower</td>
+                                <td>Alloy Tower</td>
+                                <td>B&M Irvine</td>
+                                <td>Speedy</td>
+                                <td>£75</td>
+                            </tr>
+                            <tr style="background-color: #13161f; font-weight: 700;">
+                                <td colspan="4">Total Weekly Hire Cost</td>
+                                <td>£4,001</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cherry Picker Fleet -->
+            <div class="section">
+                <div class="section-title">Cherry Picker Fleet Status</div>
+                <div class="fleet-grid">
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-01</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-02</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-03</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-04</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-05</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-06</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-07</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-08</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                    <div class="fleet-unit">
+                        <div class="fleet-unit-id">CP-09</div>
+                        <div class="fleet-unit-status">Awaiting Data</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Alerts -->
+            <div class="section alerts-section">
+                <div class="section-title">Operations Status</div>
+                <div class="alert green">
+                    <div class="alert-icon">✓</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Weekly Revenue Above Target</div>
+                        <div class="alert-message">£119K planned revenue (19% above £100K target). 16 gangs deployed with ~60 man days calculated at £2K per man day.</div>
+                    </div>
+                </div>
+                <div class="alert">
+                    <div class="alert-icon">ℹ</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Data Sync in Progress</div>
+                        <div class="alert-message">Gang deployment and CP fleet utilisation data not yet synced to Monday.com. Planning Excel shows correct values. Monday.com sync should complete shortly.</div>
+                    </div>
+                </div>
+                <div class="alert green">
+                    <div class="alert-icon">✓</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Equipment Hire Utilisation Strong</div>
+                        <div class="alert-message">£4,001 weekly hire spend across 10 equipment items. B&M and TK Maxx driving majority of demand. Hire Safe is primary supplier.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: FINANCE -->
+        <div id="finance" class="tab-content">
+            <!-- KPI Row -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-label">Gross Margin</div>
+                    <div class="kpi-value">37.2%</div>
+                    <div class="kpi-subtext">3.3pts above target</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 110%; background-color: #22c55e;"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Revenue</div>
+                    <div class="kpi-value">£990,643</div>
+                    <div class="kpi-subtext">4.9% below target</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 95%; background-color: #f59e0b;"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Net Profit</div>
+                    <div class="kpi-value">£55,730</div>
+                    <div class="kpi-subtext">22.6% below target</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 77%; background-color: #ef4444;"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Net Margin</div>
+                    <div class="kpi-value">5.63%</div>
+                    <div class="kpi-subtext">vs 6.9% target</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 82%; background-color: #f59e0b;"></div></div>
+                </div>
+            </div>
+
+            <!-- Revenue Breakdown -->
+            <div class="section">
+                <div class="section-title">February Revenue Breakdown</div>
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P&L Summary -->
+            <div class="section">
+                <div class="section-title">February P&L Waterfall</div>
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="plChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Tracker -->
+            <div class="section">
+                <div class="section-title">February KPI Performance</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>KPI</th>
+                                <th>Actual</th>
+                                <th>Target</th>
+                                <th>Variance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Gross Margin %</td>
+                                <td>37.2%</td>
+                                <td>33.9%</td>
+                                <td>+3.3pts</td>
+                                <td><span class="rag-dot green"></span>Green</td>
+                            </tr>
+                            <tr>
+                                <td>Revenue</td>
+                                <td>£990,643</td>
+                                <td>£1,041,667</td>
+                                <td>-4.9%</td>
+                                <td><span class="rag-dot amber"></span>Amber</td>
+                            </tr>
+                            <tr>
+                                <td>Net Profit</td>
+                                <td>£55,730</td>
+                                <td>£72,031</td>
+                                <td>-22.6%</td>
+                                <td><span class="rag-dot red"></span>Red</td>
+                            </tr>
+                            <tr>
+                                <td>Operating Margin %</td>
+                                <td>5.63%</td>
+                                <td>6.9%</td>
+                                <td>-1.27pts</td>
+                                <td><span class="rag-dot amber"></span>Amber</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- P&L Detailed -->
+            <div class="section">
+                <div class="section-title">February P&L Summary</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Value</th>
+                                <th>% of Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="font-weight: 700;">
+                                <td>Total Turnover</td>
+                                <td>£990,643</td>
+                                <td>100.0%</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp; ➤ Call Out</td>
+                                <td>£240,634</td>
+                                <td>24.3%</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp; ➤ Project</td>
+                                <td>£524,977</td>
+                                <td>53.0%</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp; ➤ Small Project</td>
+                                <td>£86,450</td>
+                                <td>8.7%</td>
+                            </tr>
+                            <tr>
+                                <td>&nbsp; ➤ Small Work</td>
+                                <td>£138,574</td>
+                                <td>14.0%</td>
+                            </tr>
+                            <tr style="border-top: 1px solid #2a2d3a; font-weight: 700;">
+                                <td>Cost of Sales</td>
+                                <td>£622,167</td>
+                                <td>62.8%</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #2a2d3a; font-weight: 700;">
+                                <td>Gross Profit</td>
+                                <td>£368,476</td>
+                                <td>37.2%</td>
+                            </tr>
+                            <tr>
+                                <td>Administrative Costs</td>
+                                <td>£322,014</td>
+                                <td>32.5%</td>
+                            </tr>
+                            <tr>
+                                <td>Other Income</td>
+                                <td>£9,268</td>
+                                <td>0.9%</td>
+                            </tr>
+                            <tr style="border-top: 1px solid #2a2d3a; font-weight: 700; background-color: #13161f;">
+                                <td>Operating Profit</td>
+                                <td>£55,730</td>
+                                <td>5.63%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cost of Sales Breakdown -->
+            <div class="section">
+                <div class="section-title">Top Cost of Sales Items</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Cost</th>
+                                <th>% of CoS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CIS Labour</td>
+                                <td>£121,584</td>
+                                <td>19.5%</td>
+                            </tr>
+                            <tr>
+                                <td>Scaffold</td>
+                                <td>£74,438</td>
+                                <td>12.0%</td>
+                            </tr>
+                            <tr>
+                                <td>Wages</td>
+                                <td>£64,569</td>
+                                <td>10.4%</td>
+                            </tr>
+                            <tr>
+                                <td>Materials</td>
+                                <td>£55,678</td>
+                                <td>8.9%</td>
+                            </tr>
+                            <tr>
+                                <td>Coating</td>
+                                <td>£35,252</td>
+                                <td>5.7%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin Costs -->
+            <div class="section">
+                <div class="section-title">Administrative Costs (£322,014)</div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Cost</th>
+                                <th>% of Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Admin Wages</td>
+                                <td>£157,475</td>
+                                <td>48.9%</td>
+                            </tr>
+                            <tr>
+                                <td>National Insurance</td>
+                                <td>£22,590</td>
+                                <td>7.0%</td>
+                            </tr>
+                            <tr>
+                                <td>Depreciation</td>
+                                <td>£19,391</td>
+                                <td>6.0%</td>
+                            </tr>
+                            <tr>
+                                <td>Dinner Money</td>
+                                <td>£12,261</td>
+                                <td>3.8%</td>
+                            </tr>
+                            <tr>
+                                <td>Travel</td>
+                                <td>£8,486</td>
+                                <td>2.6%</td>
+                            </tr>
+                            <tr>
+                                <td>Insurance</td>
+                                <td>£8,108</td>
+                                <td>2.5%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cashflow -->
+            <div class="section">
+                <div class="section-title">5-Year Cashflow Trajectory</div>
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <canvas id="cashflowChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finance Alerts -->
+            <div class="section alerts-section">
+                <div class="section-title">Finance Priorities</div>
+                <div class="alert red">
+                    <div class="alert-icon">⚠</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Net Profit 22.6% Below Target</div>
+                        <div class="alert-message">Administrative costs at £322K are the primary driver. Admin wages (£157.5K) represent 48.9% of admin spend. Review headcount, discretionary expenses, and SG&A efficiency.</div>
+                    </div>
+                </div>
+                <div class="alert amber">
+                    <div class="alert-icon">!</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Revenue 4.9% Below Monthly Target</div>
+                        <div class="alert-message">£990K vs £1.04M target. Annualised run rate £11.9M vs £12.5M plan. Project revenue (53%) is primary driver. Sales pipeline remains healthy at £23M.</div>
+                    </div>
+                </div>
+                <div class="alert green">
+                    <div class="alert-icon">✓</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Gross Margin Beating Forecast</div>
+                        <div class="alert-message">37.2% actual vs 33.9% target. 3.3 percentage points above plan. Strong cost control and favourable mix drive outperformance.</div>
+                    </div>
+                </div>
+                <div class="alert green">
+                    <div class="alert-icon">✓</div>
+                    <div class="alert-content">
+                        <div class="alert-title">Strong Cashflow Trajectory</div>
+                        <div class="alert-message">5-year forecast shows cash growth from £800K (FY26 opening) to £16.24M (FY31 closing). Revenue CAGR 25%, net profit CAGR 53%.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Trigger chart redraw if charts exist
+            setTimeout(() => {
+                Object.keys(chartInstances).forEach(key => {
+                    if (chartInstances[key]) {
+                        chartInstances[key].resize();
+                    }
+                });
+            }, 100);
+        }
+
+        // Chart instances
+        const chartInstances = {};
+        const chartColors = {
+            primary: 'rgba(99, 102, 241, 0.8)',
+            primaryLight: 'rgba(99, 102, 241, 0.1)',
+            success: 'rgba(34, 197, 94, 0.8)',
+            successLight: 'rgba(34, 197, 94, 0.1)',
+            warning: 'rgba(245, 158, 11, 0.8)',
+            warningLight: 'rgba(245, 158, 11, 0.1)',
+            danger: 'rgba(239, 68, 68, 0.8)',
+            dangerLight: 'rgba(239, 68, 68, 0.1)',
+            purple: 'rgba(168, 85, 247, 0.8)',
+            purpleLight: 'rgba(168, 85, 247, 0.1)',
+            grid: 'rgba(42, 45, 58, 0.3)',
+            text: '#e4e4e7',
+            textMuted: '#9ca3af'
+        };
+
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: chartColors.text,
+                        font: { size: 13, weight: '600' },
+                        padding: 20
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: chartColors.textMuted, font: { size: 12 } },
+                    grid: { color: chartColors.grid, drawBorder: false }
+                },
+                y: {
+                    ticks: { color: chartColors.textMuted, font: { size: 12 } },
+                    grid: { color: chartColors.grid, drawBorder: false }
+                }
+            }
+        };
+
+        // 5-Year Growth Chart
+        const growthCtx = document.getElementById('growthChart').getContext('2d');
+        chartInstances.growth = new Chart(growthCtx, {
+            type: 'bar',
+            data: {
+                labels: ['FY26', 'FY27', 'FY28', 'FY29', 'FY30', 'FY31'],
+                datasets: [
+                    {
+                        label: 'Revenue (£M)',
+                        data: [12.5, 16.5, 21.0, 26.25, 32.1, 37.45],
+                        backgroundColor: chartColors.primary,
+                        borderRadius: 6,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Net Profit (£M)',
+                        data: [0.864, 1.41, 2.31, 3.61, 4.87, 6.37],
+                        type: 'line',
+                        borderColor: chartColors.success,
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: false,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                ...chartDefaults,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        ticks: { color: chartColors.textMuted, font: { size: 12 } },
+                        grid: { color: chartColors.grid }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        ticks: { color: chartColors.textMuted, font: { size: 12 } },
+                        grid: { drawOnChartArea: false }
+                    },
+                    x: {
+                        ticks: { color: chartColors.textMuted, font: { size: 12 } },
+                        grid: { color: chartColors.grid }
+                    }
+                }
+            }
+        });
+
+        // Margin Chart
+        const marginCtx = document.getElementById('marginChart').getContext('2d');
+        chartInstances.margin = new Chart(marginCtx, {
+            type: 'line',
+            data: {
+                labels: ['FY26', 'FY27', 'FY28', 'FY29', 'FY30', 'FY31'],
+                datasets: [
+                    {
+                        label: 'Gross Margin %',
+                        data: [33.9, 34.0, 35.0, 36.0, 36.0, 37.0],
+                        borderColor: chartColors.success,
+                        backgroundColor: chartColors.successLight,
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 5,
+                        pointBackgroundColor: chartColors.success
+                    },
+                    {
+                        label: 'Operating Margin %',
+                        data: [6.9, 8.6, 11.0, 13.8, 15.2, 17.0],
+                        borderColor: chartColors.purple,
+                        backgroundColor: chartColors.purpleLight,
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 5,
+                        pointBackgroundColor: chartColors.purple
+                    },
+                    {
+                        label: 'Net Margin %',
+                        data: [6.9, 8.6, 11.0, 13.8, 15.2, 17.0],
+                        borderColor: chartColors.primary,
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        fill: false,
+                        borderWidth: 2,
+                        pointRadius: 5,
+                        pointBackgroundColor: chartColors.primary,
+                        borderDash: [5, 5]
+                    }
+                ]
+            },
+            options: {
+                ...chartDefaults,
+                plugins: {
+                    ...chartDefaults.plugins,
+                    legend: {
+                        ...chartDefaults.plugins.legend,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+
+        // Revenue Breakdown (Doughnut)
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        chartInstances.revenue = new Chart(revenueCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Project (£525K)', 'Call Out (£241K)', 'Small Work (£139K)', 'Small Project (£86K)'],
+                datasets: [{
+                    data: [524.977, 240.634, 138.574, 86.450],
+                    backgroundColor: [
+                        chartColors.primary,
+                        chartColors.success,
+                        chartColors.warning,
+                        chartColors.purple
+                    ],
+                    borderColor: '#0f1117',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: chartColors.text,
+                            font: { size: 13, weight: '600' },
+                            padding: 20
+                        },
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // P&L Waterfall Chart
+        const plCtx = document.getElementById('plChart').getContext('2d');
+        chartInstances.pl = new Chart(plCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Turnover', 'Cost of Sales', 'Gross Profit', 'Admin Costs', 'Other Income', 'Operating Profit'],
+                datasets: [{
+                    label: 'Amount (£K)',
+                    data: [990.643, -622.167, 368.476, -322.014, 9.268, 55.730],
+                    backgroundColor: [
+                        chartColors.success,
+                        chartColors.danger,
+                        chartColors.success,
+                        chartColors.danger,
+                        chartColors.warning,
+                        chartColors.primary
+                    ],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    y: {
+                        ticks: { color: chartColors.textMuted, font: { size: 12 } },
+                        grid: { color: chartColors.grid }
+                    },
+                    x: {
+                        ticks: { color: chartColors.textMuted, font: { size: 12 } },
+                        grid: { color: chartColors.grid }
+                    }
+                }
+            }
+        });
+
+        // Cashflow Chart
+        const cashflowCtx = document.getElementById('cashflowChart').getContext('2d');
+        chartInstances.cashflow = new Chart(cashflowCtx, {
+            type: 'line',
+            data: {
+                labels: ['FY26 Open', 'FY26 Close', 'FY27 Close', 'FY28 Close', 'FY29 Close', 'FY30 Close', 'FY31 Close'],
+                datasets: [{
+                    label: 'Cash Position (£M)',
+                    data: [0.8, 0.8, 1.72, 3.46, 6.45, 10.59, 16.24],
+                    borderColor: chartColors.success,
+                    backgroundColor: chartColors.successLight,
+                    tension: 0.5,
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 6,
+                    pointBackgroundColor: chartColors.success,
+                    pointBorderColor: '#0f1117',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                plugins: {
+                    ...chartDefaults.plugins,
+                    legend: {
+                        ...chartDefaults.plugins.legend,
+                        display: true
+                    }
+                }
+            }
+        });
+
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    </script>
+</body>
+</html>
