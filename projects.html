@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects Dashboard — RMLFS Group</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f1117; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 20px 24px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #fff; }
+  .header p { color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 16px 24px; }
+  .kpi { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 16px; }
+  .kpi-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .kpi-value { font-size: 22px; font-weight: 700; color: #e2e8f0; margin: 6px 0; }
+  .kpi-sub { font-size: 11px; color: #64748b; }
+  .kpi-sub.up { color: #22c55e; }
+  .kpi-sub.down { color: #ef4444; }
+  .kpi-sub.warn { color: #f59e0b; }
+  .content { padding: 0 24px 24px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 20px; }
+  .card-title { font-size: 13px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+  .chart-container { position: relative; height: 220px; }
+  .project-card { background: #0f1117; border: 1px solid #2a2d3a; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .project-card.red { border-left: 4px solid #ef4444; }
+  .project-card.amber { border-left: 4px solid #f59e0b; }
+  .project-card.green { border-left: 4px solid #22c55e; }
+  .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .project-name { font-size: 15px; font-weight: 600; color: #e2e8f0; }
+  .project-client { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .rag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+  .rag-green { background: #14532d; color: #4ade80; }
+  .rag-amber { background: #451a03; color: #fbbf24; }
+  .rag-red { background: #450a0a; color: #f87171; }
+  .project-metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .metric { text-align: center; }
+  .metric-value { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+  .metric-label { font-size: 10px; color: #64748b; margin-top: 2px; }
+  .progress-bar { background: #2a2d3a; border-radius: 99px; height: 5px; margin-top: 10px; }
+  .progress-fill { height: 5px; border-radius: 99px; }
+  .alert-box { background: #2d1b1b; border: 1px solid #7f1d1d; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 12px; }
+  .alert-box .alert-title { color: #f87171; font-weight: 600; margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #0f1117; color: #64748b; font-weight: 600; text-align: left; padding: 8px 10px; border-bottom: 1px solid #2a2d3a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 8px 10px; border-bottom: 1px solid #1e2130; color: #cbd5e1; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🏗️ Projects Dashboard</h1>
+  <p>RMLFS Group · Live from Monday.com · Refreshed 30 March 2026</p>
+</div>
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-label">Live Projects</div>
+    <div class="kpi-value">9</div>
+    <div class="kpi-sub">On Project Board</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Total Contract Value</div>
+    <div class="kpi-value">£480k</div>
+    <div class="kpi-sub">9 projects combined</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Average Margin</div>
+    <div class="kpi-value">42.7%</div>
+    <div class="kpi-sub up">↑ Well above 33.9% target</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Invoice %</div>
+    <div class="kpi-value">15.3%</div>
+    <div class="kpi-sub warn">£73k invoiced of £480k</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">RAG Status</div>
+    <div class="kpi-value" style="color:#ef4444">1 RED</div>
+    <div class="kpi-sub down">BM Dallas overdue</div>
+  </div>
+</div>
+<div class="content">
+  <div class="alert-box">
+    <div class="alert-title">🔴 RED: BM Dallas — Overdue & Low Margin</div>
+    Contract end date was 28 March 2026 (PAST). Forecast end now 17 April 2026. Only 40% complete. Margin at 25% (below 33.9% target). £17,618 outstanding. PM: Jack Gillam — immediate review required.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Margin Distribution</div>
+      <div class="chart-container">
+        <canvas id="marginChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">PM Workload (Contract Value)</div>
+      <div class="chart-container">
+        <canvas id="pmChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">Live Project Summary</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Project</th><th>Client</th><th>PM</th><th>Contract £</th><th>Margin</th><th>Complete</th><th>End Date</th><th>Forecast End</th><th>Invoiced</th><th>RAG</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background:#1a0a0a">
+          <td><strong>BM Dallas</strong></td><td>BM Dallas</td><td>Jack Gillam</td><td>£35,237</td><td style="color:#f87171">25.0%</td><td>40%</td><td style="color:#f87171">28/03/26 ⚠</td><td>17/04/26</td><td>£17,618 (50%)</td><td><span class="rag rag-red">RED</span></td>
+        </tr>
+        <tr style="background:#1a1200">
+          <td>TK Maxx</td><td>TK Maxx</td><td>Jack Gillam</td><td>£0</td><td>—</td><td>0%</td><td>—</td><td>—</td><td>£0</td><td><span class="rag rag-amber">AMBER</span></td>
+        </tr>
+        <tr>
+          <td>Poundland</td><td>Poundland</td><td>Mike Adams</td><td>£68,058</td><td style="color:#22c55e">54.0%</td><td>95%</td><td>27/03/26</td><td>27/03/26</td><td>£0</td><td><span class="rag rag-green">GREEN</span></td>
+        </tr>
+        <tr>
+          <td>Low Bridge</td><td>Low Bridge</td><td>Ciaran</td><td>£134,216</td><td style="color:#22c55e">40.0%</td><td>0%</td><td>04/05/26</td><td>04/05/26</td><td>£0</td><td><span class="rag rag-green">GREEN</span></td>
+        </tr>
+        <tr>
+          <td>Eaton House</td><td>Eaton House</td><td>Ciaran</td><td>£70,543</td><td style="color:#22c55e">44.0%</td><td>70%</td><td>27/03/26</td><td>03/04/26</td><td>£0</td><td><span class="rag rag-green">GREEN</span></td>
+        </tr>
+        <tr>
+          <td>Go Outdoors</td><td>Go Outdoors</td><td>Jack Gillam</td><td>£60,114</td><td>38.4%</td><td>0%</td><td>17/04/26</td><td>17/04/26</td><td>£0</td><td><span class="rag rag-green">GREEN</span></td>
+        </tr>
+        <tr>
+          <td>Premier – Northwich</td><td>Premier</td><td>Jack Gillam</td><td>£55,620</td><td style="color:#22c55e">50.1%</td><td>100%</td><td>20/03/26</td><td>20/03/26</td><td>£55,620 ✓</td><td><span class="rag rag-green">GREEN</span></td>
+        </tr>
+        <tr>
+          <td>Mountain Warehouse</td><td>Mtn Warehouse</td><td>Jack Gillam</td><td>£33,484</td><td style="color:#22c55e">54.7%</td><td>70%</td><td>24/03/26</td><td>24/03/26</td><td>£0</td><td><span class="rag rag-green">GREEN</span></td>
+        </tr>
+        <tr>
+          <td>Ian B – Dumfries</td><td>Ian B</td><td>Ciaran</td><td>£22,744</td><td>35.0%</td><td>0%</td><td>24/04/26</td><td>24/04/26</td><td>£0</td><td><span class="rag rag-green">GREEN</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Invoice Status</div>
+      <div style="padding: 8px 0;">
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;">Total contract value: <strong style="color:#e2e8f0">£480,015</strong> | Invoiced: <strong style="color:#22c55e">£73,238</strong> | Pending: <strong style="color:#f59e0b">£406,777</strong></p>
+        <div style="background:#2a2d3a;border-radius:8px;height:28px;overflow:hidden;margin-bottom:8px;">
+          <div style="background:#22c55e;height:28px;width:15.3%;display:inline-block;border-radius:8px 0 0 8px;"></div>
+          <div style="background:#f59e0b;height:28px;width:84.7%;display:inline-block;"></div>
+        </div>
+        <p style="font-size:11px;color:#64748b;">15.3% invoiced — Poundland (95% complete, £68k), Eaton House (70%), Mountain Warehouse (70%) all ready to invoice soon.</p>
+        <div style="margin-top:12px;font-size:12px;color:#94a3b8;">
+          <strong style="color:#e2e8f0">Invoiceable shortly:</strong> Poundland £68k, Eaton House £70k, Mountain Warehouse £33k = ~£171k invoice pipeline
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Project Completion Status</div>
+      <div style="padding: 8px 0;">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="flex:1;text-align:center;background:#14532d;border-radius:8px;padding:12px;"><div style="font-size:18px;font-weight:700;color:#4ade80">1</div><div style="font-size:11px;color:#86efac">Complete</div></div>
+          <div style="flex:1;text-align:center;background:#1a2a1a;border-radius:8px;padding:12px;"><div style="font-size:18px;font-weight:700;color:#22c55e">4</div><div style="font-size:11px;color:#86efac">In Progress</div></div>
+          <div style="flex:1;text-align:center;background:#1e2538;border-radius:8px;padding:12px;"><div style="font-size:18px;font-weight:700;color:#60a5fa">3</div><div style="font-size:11px;color:#93c5fd">Not Started</div></div>
+          <div style="flex:1;text-align:center;background:#450a0a;border-radius:8px;padding:12px;"><div style="font-size:18px;font-weight:700;color:#f87171">1</div><div style="font-size:11px;color:#fca5a5">Overdue</div></div>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:8px;">
+          <strong style="color:#e2e8f0">Starting this week:</strong> Low Bridge (£134k, starts 30/3), Ian B Dumfries (started 25/3)<br>
+          <strong style="color:#f59e0b">Watch:</strong> Eaton House end date was 27/3, forecast slipped to 3/4
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+new Chart(document.getElementById('marginChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Premier', 'Poundland', 'Mtn Warehouse', 'Eaton House', 'Go Outdoors', 'Low Bridge', 'Ian B', 'BM Dallas'],
+    datasets: [{
+      data: [50.13, 54, 54.7, 44, 38.4, 40, 35, 25],
+      backgroundColor: (ctx) => {
+        const v = ctx.raw;
+        return v >= 40 ? '#22c55e' : v >= 33.9 ? '#f59e0b' : '#ef4444';
+      },
+      borderRadius: 5
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#64748b', font: {size:9} }, grid: { color: '#1e2130' } },
+      y: { ticks: { color: '#64748b', font: {size:10}, callback: v => v + '%' }, grid: { color: '#1e2130' }, min: 0, max: 65 }
+    }
+  }
+});
+
+new Chart(document.getElementById('pmChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Jack Gillam', 'Ciaran', 'Mike Adams'],
+    datasets: [{
+      data: [184455, 227503, 68058],
+      backgroundColor: ['#6366f1','#22c55e','#f59e0b'],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: {size:11} } } }
+  }
+});
+</script>
+</body>
+</html>

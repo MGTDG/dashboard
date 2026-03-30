@@ -3,1528 +3,258 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RMLFS Group — Sales Command Center</title>
+<title>Sales Command Center — RMLFS Group</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg: #0f1117;
-    --card: #1a1d27;
-    --card-border: #2a2d3a;
-    --text: #e4e4e7;
-    --text-muted: #9ca3af;
-    --accent: #6366f1;
-    --accent-light: #818cf8;
-    --green: #22c55e;
-    --green-bg: rgba(34,197,94,0.12);
-    --red: #ef4444;
-    --red-bg: rgba(239,68,68,0.12);
-    --amber: #f59e0b;
-    --amber-bg: rgba(245,158,11,0.12);
-    --blue: #3b82f6;
-    --blue-bg: rgba(59,130,246,0.12);
-    --cyan: #06b6d4;
-    --purple: #a855f7;
-    --teal: #14b8a6;
-  }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Header */
-  .header {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
-    border-bottom: 1px solid var(--card-border);
-    padding: 20px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(12px);
-  }
-
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .logo-mark {
-    width: 42px;
-    height: 42px;
-    background: linear-gradient(135deg, var(--accent), var(--purple));
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 16px;
-    color: #fff;
-    letter-spacing: -0.5px;
-  }
-
-  .header-title {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .header-subtitle {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .live-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    background: rgba(34,197,94,0.15);
-    border: 1px solid rgba(34,197,94,0.3);
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--green);
-  }
-
-  .live-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--green);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
-  .date-display {
-    font-size: 13px;
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-
-  /* Main Grid */
-  .dashboard {
-    padding: 24px 32px;
-    max-width: 1600px;
-    margin: 0 auto;
-  }
-
-  /* KPI Row */
-  .kpi-row {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
-  .kpi-card {
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s, border-color 0.2s;
-  }
-
-  .kpi-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent);
-  }
-
-  .kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    border-radius: 12px 12px 0 0;
-  }
-
-  .kpi-card:nth-child(1)::before { background: var(--accent); }
-  .kpi-card:nth-child(2)::before { background: var(--green); }
-  .kpi-card:nth-child(3)::before { background: var(--amber); }
-  .kpi-card:nth-child(4)::before { background: var(--blue); }
-  .kpi-card:nth-child(5)::before { background: var(--cyan); }
-  .kpi-card:nth-child(6)::before { background: var(--purple); }
-
-  .kpi-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-  }
-
-  .kpi-value {
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -1px;
-    margin-bottom: 6px;
-  }
-
-  .kpi-sub {
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .kpi-up { color: var(--green); }
-  .kpi-down { color: var(--red); }
-  .kpi-neutral { color: var(--text-muted); }
-
-  /* Chart Grid */
-  .chart-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
-    margin-bottom: 24px;
-  }
-
-  .chart-grid-3 {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 24px;
-  }
-
-  .chart-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 24px;
-  }
-
-  .card {
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    padding: 24px;
-    transition: border-color 0.2s;
-  }
-
-  .card:hover {
-    border-color: rgba(99,102,241,0.3);
-  }
-
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-
-  .card-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .card-badge {
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: 600;
-  }
-
-  .badge-green { background: var(--green-bg); color: var(--green); }
-  .badge-red { background: var(--red-bg); color: var(--red); }
-  .badge-amber { background: var(--amber-bg); color: var(--amber); }
-  .badge-blue { background: var(--blue-bg); color: var(--blue); }
-
-  /* Pipeline Funnel */
-  .funnel-stage {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-
-  .funnel-label {
-    width: 140px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  .funnel-bar-wrap {
-    flex: 1;
-    height: 32px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 6px;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .funnel-bar {
-    height: 100%;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    padding-left: 12px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #fff;
-    transition: width 1s ease;
-  }
-
-  .funnel-count {
-    width: 40px;
-    text-align: right;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-    flex-shrink: 0;
-  }
-
-  .funnel-value {
-    width: 100px;
-    text-align: right;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-    flex-shrink: 0;
-  }
-
-  /* Top Deals Table */
-  .deals-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .deals-table th {
-    text-align: left;
-    padding: 10px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--card-border);
-  }
-
-  .deals-table td {
-    padding: 12px;
-    font-size: 13px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    vertical-align: middle;
-  }
-
-  .deals-table tr:hover td {
-    background: rgba(99,102,241,0.05);
-  }
-
-  .deal-name {
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .deal-org {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-
-  .stage-pill {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .stage-quote { background: rgba(102,204,255,0.15); color: #66ccff; }
-  .stage-interested { background: rgba(78,204,198,0.15); color: #4eccc6; }
-  .stage-conversation { background: rgba(85,89,223,0.15); color: #8b8fef; }
-  .stage-hot { background: rgba(255,203,0,0.15); color: #ffcb00; }
-  .stage-awaiting { background: rgba(3,127,76,0.15); color: #22c55e; }
-  .stage-won { background: rgba(0,200,117,0.15); color: #00c875; }
-  .stage-lost { background: rgba(223,47,74,0.15); color: #df2f4a; }
-
-  /* Revenue Target Gauge */
-  .gauge-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 0;
-  }
-
-  .gauge-container {
-    position: relative;
-    width: 200px;
-    height: 110px;
-    margin-bottom: 16px;
-  }
-
-  /* Monthly Progress Bars */
-  .month-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-
-  .month-label {
-    width: 50px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-    flex-shrink: 0;
-  }
-
-  .month-bar-wrap {
-    flex: 1;
-    height: 24px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 6px;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .month-bar {
-    height: 100%;
-    border-radius: 6px;
-    transition: width 1.2s ease;
-    position: relative;
-  }
-
-  .month-target-line {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: rgba(255,255,255,0.5);
-    z-index: 2;
-  }
-
-  .month-values {
-    width: 160px;
-    font-size: 12px;
-    color: var(--text-muted);
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  .month-actual {
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  /* Action Items */
-  .action-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-
-  .action-item:last-child {
-    border-bottom: none;
-  }
-
-  .action-owner {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: #fff;
-    flex-shrink: 0;
-  }
-
-  .action-text {
-    font-size: 13px;
-    color: var(--text);
-    line-height: 1.4;
-  }
-
-  .action-due {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 4px;
-  }
-
-  /* Scroll container for tables */
-  .table-scroll {
-    max-height: 400px;
-    overflow-y: auto;
-  }
-
-  .table-scroll::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .table-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .table-scroll::-webkit-scrollbar-thumb {
-    background: var(--card-border);
-    border-radius: 3px;
-  }
-
-  /* Strategic KPIs */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .strategic-kpi {
-    background: rgba(255,255,255,0.03);
-    border-radius: 8px;
-    padding: 14px;
-    border: 1px solid rgba(255,255,255,0.04);
-  }
-
-  .strategic-kpi-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
-
-  .strategic-kpi-value {
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--text);
-  }
-
-  .strategic-kpi-target {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 4px;
-  }
-
-  .progress-mini {
-    width: 100%;
-    height: 4px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 2px;
-    margin-top: 8px;
-    overflow: hidden;
-  }
-
-  .progress-mini-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 1s ease;
-  }
-
-  /* Client breakdown */
-  .client-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-
-  .client-row:last-child { border-bottom: none; }
-
-  .client-name {
-    flex: 1;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .client-deals {
-    font-size: 12px;
-    color: var(--text-muted);
-    width: 60px;
-    text-align: center;
-  }
-
-  .client-value {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    width: 100px;
-    text-align: right;
-  }
-
-  /* Responsive */
-  @media (max-width: 1200px) {
-    .kpi-row { grid-template-columns: repeat(3, 1fr); }
-    .chart-grid, .chart-grid-3 { grid-template-columns: 1fr; }
-    .chart-grid-2 { grid-template-columns: 1fr; }
-  }
-
-  @media (max-width: 768px) {
-    .kpi-row { grid-template-columns: repeat(2, 1fr); }
-    .dashboard { padding: 16px; }
-    .header { padding: 16px; }
-  }
-
-  /* Chart canvas sizing */
-  .chart-container {
-    position: relative;
-    width: 100%;
-    height: 280px;
-  }
-
-  .chart-container-sm {
-    position: relative;
-    width: 100%;
-    height: 240px;
-  }
-
-  /* Section divider */
-  .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 16px;
-    padding-left: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--card-border);
-  }
-
-  /* Salesperson card */
-  .sp-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: rgba(255,255,255,0.02);
-    border-radius: 8px;
-    margin-bottom: 8px;
-    border: 1px solid rgba(255,255,255,0.04);
-  }
-
-  .sp-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 700;
-    color: #fff;
-    flex-shrink: 0;
-  }
-
-  .sp-info { flex: 1; }
-
-  .sp-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .sp-deals {
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-
-  .sp-value {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--text);
-    text-align: right;
-  }
+  body { background: #0f1117; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 20px 24px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #fff; }
+  .header p { color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 16px 24px; }
+  .kpi { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 16px; }
+  .kpi-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .kpi-value { font-size: 22px; font-weight: 700; color: #e2e8f0; margin: 6px 0; }
+  .kpi-sub { font-size: 11px; color: #64748b; }
+  .kpi-sub.up { color: #22c55e; }
+  .kpi-sub.down { color: #ef4444; }
+  .kpi-sub.warn { color: #f59e0b; }
+  .content { padding: 0 24px 24px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 20px; }
+  .card-title { font-size: 13px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+  .chart-container { position: relative; height: 220px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #0f1117; color: #64748b; font-weight: 600; text-align: left; padding: 8px 10px; border-bottom: 1px solid #2a2d3a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 8px 10px; border-bottom: 1px solid #1e2130; color: #cbd5e1; }
+  tr:hover td { background: #1e2130; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+  .badge-quote { background: #1e3a5f; color: #60a5fa; }
+  .badge-conversation { background: #1e2d40; color: #94a3b8; }
+  .badge-interested { background: #1a2e1a; color: #4ade80; }
+  .badge-hot { background: #3b1f1f; color: #f87171; }
+  .badge-awaiting { background: #2d2d1a; color: #facc15; }
+  .progress-bar { background: #2a2d3a; border-radius: 99px; height: 6px; margin-top: 4px; }
+  .progress-fill { height: 6px; border-radius: 99px; background: #6366f1; }
+  .alert-box { background: #2d1b1b; border: 1px solid #7f1d1d; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 12px; }
+  .alert-box .alert-title { color: #f87171; font-weight: 600; margin-bottom: 4px; }
 </style>
 </head>
 <body>
-
-<!-- Header -->
 <div class="header">
-  <div class="header-left">
-    <div class="logo-mark">RML</div>
-    <div>
-      <div class="header-title">Sales Command Center</div>
-      <div class="header-subtitle">RMLFS Group — All Companies</div>
-    </div>
+  <h1>📊 Sales Command Center</h1>
+  <p>RMLFS Group · Live from Monday.com · Refreshed 30 March 2026</p>
+</div>
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-label">Total Pipeline</div>
+    <div class="kpi-value">£16.2m</div>
+    <div class="kpi-sub">100 active deals</div>
   </div>
-  <div class="header-right">
-    <div class="live-badge">
-      <span class="live-dot"></span>
-      LIVE DATA
-    </div>
-    <div class="date-display" id="dateDisplay"></div>
+  <div class="kpi">
+    <div class="kpi-label">Awaiting Order</div>
+    <div class="kpi-value">£424k</div>
+    <div class="kpi-sub warn">2 deals close to won</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Hot Deals</div>
+    <div class="kpi-value">£150k</div>
+    <div class="kpi-sub warn">2 hot deals</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Annual Target</div>
+    <div class="kpi-value">£12.5m</div>
+    <div class="kpi-sub">FY26 revenue target</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Monthly Target</div>
+    <div class="kpi-value">£1.04m</div>
+    <div class="kpi-sub down">Feb: £991k (–4.9%)</div>
   </div>
 </div>
-
-<!-- Dashboard Content -->
-<div class="dashboard">
-
-  <!-- KPI Cards -->
-  <div class="kpi-row">
-    <div class="kpi-card">
-      <div class="kpi-label">Total Pipeline Value</div>
-      <div class="kpi-value" style="color: var(--accent);">£32.9M</div>
-      <div class="kpi-sub kpi-up">&#9650; Current pipeline from 261 deals</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Q1 Revenue (YTD)</div>
-      <div class="kpi-value" style="color: var(--green);">£1.91M</div>
-      <div class="kpi-sub kpi-neutral">Target: £2.62M &nbsp;|&nbsp; 72.7% on track</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Deals Won (Q1)</div>
-      <div class="kpi-value" style="color: var(--amber);">718</div>
-      <div class="kpi-sub kpi-up">Jan: 360 &nbsp;|&nbsp; Feb: 319 &nbsp;|&nbsp; Mar: 39</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Win Rate (Avg)</div>
-      <div class="kpi-value" style="color: var(--blue);">61.5%</div>
-      <div class="kpi-sub kpi-up">&#9650; Mar running at 88.6%</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Quotes Sent (Q1)</div>
-      <div class="kpi-value" style="color: var(--cyan);">406</div>
-      <div class="kpi-sub kpi-neutral">Jan: 112 &nbsp;|&nbsp; Feb: 129 &nbsp;|&nbsp; Mar: 165</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Annual Target</div>
-      <div class="kpi-value" style="color: var(--purple);">£13M</div>
-      <div class="kpi-sub kpi-neutral">14.7% achieved &nbsp;|&nbsp; £11.1M remaining</div>
-    </div>
+<div class="content">
+  <!-- Alerts -->
+  <div class="alert-box">
+    <div class="alert-title">🔴 Large Unassigned Pipeline Alert</div>
+    £14.3m of the pipeline has no assigned salesperson — including Aldi Chelmsford (£2.75m), Dan Foss (£2.54m), and Cencora Chessington (£1.35m). Ownership assignment needed.
   </div>
 
-  <!-- Section: Revenue -->
-  <div class="section-title">Revenue Performance</div>
-
-  <div class="chart-grid">
-    <!-- Monthly Revenue Chart -->
+  <div class="grid-2">
     <div class="card">
-      <div class="card-header">
-        <div class="card-title">Monthly Revenue — Target vs Actual 2026</div>
-        <span class="card-badge badge-blue">FY 2026</span>
-      </div>
+      <div class="card-title">Pipeline by Stage</div>
       <div class="chart-container">
-        <canvas id="revenueChart"></canvas>
+        <canvas id="stageChart"></canvas>
       </div>
     </div>
-
-    <!-- Q1 Progress -->
     <div class="card">
-      <div class="card-header">
-        <div class="card-title">Q1 Monthly Breakdown</div>
-        <span class="card-badge badge-amber">In Progress</span>
-      </div>
-      <div style="padding-top: 10px;">
-        <div class="month-row">
-          <div class="month-label">Jan</div>
-          <div class="month-bar-wrap">
-            <div class="month-bar" style="width: 100%; background: linear-gradient(90deg, var(--green), #4ade80);">
-            </div>
-            <div class="month-target-line" style="left: 80%;"></div>
-          </div>
-          <div class="month-values">
-            <span class="month-actual" style="color: var(--green);">£1.07M</span> / £850K
-          </div>
-        </div>
-        <div style="font-size:11px; color: var(--green); text-align:center; margin-bottom:16px;">125.6% — Exceeded target</div>
-
-        <div class="month-row">
-          <div class="month-label">Feb</div>
-          <div class="month-bar-wrap">
-            <div class="month-bar" style="width: 90%; background: linear-gradient(90deg, var(--amber), #fbbf24);">
-            </div>
-            <div class="month-target-line" style="left: 100%;"></div>
-          </div>
-          <div class="month-values">
-            <span class="month-actual" style="color: var(--amber);">£783K</span> / £870K
-          </div>
-        </div>
-        <div style="font-size:11px; color: var(--amber); text-align:center; margin-bottom:16px;">90.1% — Below target</div>
-
-        <div class="month-row">
-          <div class="month-label">Mar</div>
-          <div class="month-bar-wrap">
-            <div class="month-bar" style="width: 6%; background: linear-gradient(90deg, var(--red), #f87171);">
-            </div>
-            <div class="month-target-line" style="left: 100%;"></div>
-          </div>
-          <div class="month-values">
-            <span class="month-actual" style="color: var(--red);">£54K</span> / £900K
-          </div>
-        </div>
-        <div style="font-size:11px; color: var(--text-muted); text-align:center; margin-bottom:16px;">6.0% — Month in progress</div>
-
-        <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 16px; margin-top: 16px;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 13px; color: var(--text-muted);">Q1 Total</span>
-            <span style="font-size: 15px; font-weight: 800; color: var(--text);">£1,905,172</span>
-          </div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 72.7%; background: var(--accent);"></div>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-top: 6px;">
-            <span style="font-size: 11px; color: var(--text-muted);">72.7% of £2,620,000 target</span>
-            <span style="font-size: 11px; color: var(--amber);">£714,828 to go</span>
-          </div>
-        </div>
+      <div class="card-title">Pipeline by Salesperson</div>
+      <div class="chart-container">
+        <canvas id="personChart"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- Section: Pipeline -->
-  <div class="section-title">Pipeline Overview</div>
-
-  <div class="chart-grid">
-    <!-- Pipeline Funnel -->
+  <div class="grid-2">
     <div class="card">
-      <div class="card-header">
-        <div class="card-title">Pipeline by Stage</div>
-        <span class="card-badge badge-green">261 Active Deals</span>
-      </div>
+      <div class="card-title">Top Clients by Pipeline Value</div>
+      <table>
+        <thead><tr><th>Client</th><th>Pipeline £</th><th>% of Total</th></tr></thead>
+        <tbody>
+          <tr><td>DSP Construction (Aldi)</td><td>£2,747,326</td><td>16.9%</td></tr>
+          <tr><td>B&M</td><td>£2,723,700</td><td>16.8%</td></tr>
+          <tr><td>Dan Foss Ltd</td><td>£2,541,000</td><td>15.7%</td></tr>
+          <tr><td>CBRE</td><td>£1,900,000</td><td>11.7%</td></tr>
+          <tr><td>ID Construction (Primark)</td><td>£837,000</td><td>5.2%</td></tr>
+          <tr><td>TJX Europe (TK Maxx)</td><td>£603,791</td><td>3.7%</td></tr>
+          <tr><td>MITIE FM</td><td>£570,522</td><td>3.5%</td></tr>
+          <tr><td>The Momentum Group</td><td>£520,000</td><td>3.2%</td></tr>
+          <tr><td>Mason Partners</td><td>£349,115</td><td>2.2%</td></tr>
+          <tr><td>JD Sports</td><td>£312,333</td><td>1.9%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Salesperson Pipeline Breakdown</div>
       <div style="padding-top: 8px;">
-        <div class="funnel-stage">
-          <div class="funnel-label">Quote Sent 25k+</div>
-          <div class="funnel-bar-wrap">
-            <div class="funnel-bar" style="width: 85%; background: linear-gradient(90deg, #66ccff, #3b82f6);">£27.8M</div>
-          </div>
-          <div class="funnel-count">174</div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Unassigned</span><span style="color:#94a3b8">£14,339,372</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:88.4%;background:#64748b"></div></div>
         </div>
-        <div class="funnel-stage">
-          <div class="funnel-label">Conversation</div>
-          <div class="funnel-bar-wrap">
-            <div class="funnel-bar" style="width: 30%; background: linear-gradient(90deg, #5559df, #818cf8);">£838K</div>
-          </div>
-          <div class="funnel-count">19</div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Stephen Housley</span><span style="color:#6366f1">£818,937</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:5.1%;background:#6366f1"></div></div>
         </div>
-        <div class="funnel-stage">
-          <div class="funnel-label">Interested</div>
-          <div class="funnel-bar-wrap">
-            <div class="funnel-bar" style="width: 25%; background: linear-gradient(90deg, #4eccc6, #2dd4bf);">£1.1M</div>
-          </div>
-          <div class="funnel-count">12</div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>David Gillam</span><span style="color:#22c55e">£495,000</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:3.0%;background:#22c55e"></div></div>
         </div>
-        <div class="funnel-stage">
-          <div class="funnel-label">Awaiting Order</div>
-          <div class="funnel-bar-wrap">
-            <div class="funnel-bar" style="width: 15%; background: linear-gradient(90deg, #037f4c, #22c55e);">£424K</div>
-          </div>
-          <div class="funnel-count">2</div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Grace Woodley</span><span style="color:#f59e0b">£294,693</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:1.8%;background:#f59e0b"></div></div>
         </div>
-        <div class="funnel-stage">
-          <div class="funnel-label">Hot Deal</div>
-          <div class="funnel-bar-wrap">
-            <div class="funnel-bar" style="width: 10%; background: linear-gradient(90deg, #f59e0b, #fbbf24);">£110K</div>
-          </div>
-          <div class="funnel-count">1</div>
-        </div>
-        <div class="funnel-stage">
-          <div class="funnel-label">Awaiting Quote</div>
-          <div class="funnel-bar-wrap">
-            <div class="funnel-bar" style="width: 20%; background: linear-gradient(90deg, #6b7280, #9ca3af);">—</div>
-          </div>
-          <div class="funnel-count">53</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Pipeline by Stage Doughnut -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Pipeline Composition</div>
-      </div>
-      <div class="chart-container-sm">
-        <canvas id="pipelineChart"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- Section: Top Deals & Clients -->
-  <div class="section-title">Top Deals & Key Clients</div>
-
-  <div class="chart-grid">
-    <!-- Top Deals Table -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Top 15 Deals by Value</div>
-        <span class="card-badge badge-blue">Live Pipeline</span>
-      </div>
-      <div class="table-scroll">
-        <table class="deals-table">
-          <thead>
-            <tr>
-              <th>Deal</th>
-              <th>Value</th>
-              <th>Stage</th>
-              <th>Owner</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><div class="deal-name">Aldi Chelmsford</div><div class="deal-org">DSP Construction Management Group</div></td>
-              <td style="font-weight:700;">£2,747,326</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Dan Foss LTD - 46 New Lane</div><div class="deal-org">Dan Foss Ltd</div></td>
-              <td style="font-weight:700;">£2,541,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Cencora Chessington</div><div class="deal-org">CBRE</div></td>
-              <td style="font-weight:700;">£1,355,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Cencora Leeds</div><div class="deal-org">CBRE</div></td>
-              <td style="font-weight:700;">£545,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Genesis Centre Garrett Fld</div><div class="deal-org">The Momentum Group</div></td>
-              <td style="font-weight:700;">£520,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Primark Tooting</div><div class="deal-org">ID Construction</div></td>
-              <td style="font-weight:700;">£383,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Primark Mansfield</div><div class="deal-org">MITIE FM</div></td>
-              <td style="font-weight:700;">£360,522</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Rowley Szilagy Europa Point</div><div class="deal-org">Skyline Property Solutions</div></td>
-              <td style="font-weight:700;">£296,855</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">B&M Gendros</div><div class="deal-org">B&M</div></td>
-              <td style="font-weight:700;">£260,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">TK Maxx St Helens</div><div class="deal-org">TJX Europe</div></td>
-              <td style="font-weight:700;">£250,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td>David G</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Dunbarton</div><div class="deal-org">B&M</div></td>
-              <td style="font-weight:700;">£250,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Whitescroft</div><div class="deal-org">B&M</div></td>
-              <td style="font-weight:700;">£250,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Poplar London – Block B & C</div><div class="deal-org">Trigon DM Ltd</div></td>
-              <td style="font-weight:700;">£245,000</td>
-              <td><span class="stage-pill stage-awaiting">Awaiting Order</span></td>
-              <td>David G</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">B&M Farlington</div><div class="deal-org">B&M</div></td>
-              <td style="font-weight:700;">£234,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-            <tr>
-              <td><div class="deal-name">Primark Torquay</div><div class="deal-org">ID Construction</div></td>
-              <td style="font-weight:700;">£230,000</td>
-              <td><span class="stage-pill stage-quote">Quote Sent 25k+</span></td>
-              <td style="color:var(--text-muted);">—</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Top Clients -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Top Clients by Pipeline Value</div>
-      </div>
-      <div class="table-scroll">
-        <div class="client-row" style="padding-bottom:6px; border-bottom: 1px solid var(--card-border);">
-          <div class="client-name" style="font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Client</div>
-          <div class="client-deals" style="font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Deals</div>
-          <div class="client-value" style="font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Value</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">B&M</div>
-          <div class="client-deals">18</div>
-          <div class="client-value">£3,078K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">CBRE (Cencora)</div>
-          <div class="client-deals">2</div>
-          <div class="client-value">£1,900K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">ID Construction (Primark)</div>
-          <div class="client-deals">4</div>
-          <div class="client-value">£837K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">TJX Europe (TK Maxx)</div>
-          <div class="client-deals">6</div>
-          <div class="client-value">£664K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">The Momentum Group</div>
-          <div class="client-deals">1</div>
-          <div class="client-value">£520K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">MITIE FM (Primark)</div>
-          <div class="client-deals">3</div>
-          <div class="client-value">£471K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">i2i / Citipost (William Hill)</div>
-          <div class="client-deals">6</div>
-          <div class="client-value">£338K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">JD Sports / Go Outdoors</div>
-          <div class="client-deals">4</div>
-          <div class="client-value">£284K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">Legat Owen</div>
-          <div class="client-deals">2</div>
-          <div class="client-value">£284K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">Mason Partners</div>
-          <div class="client-deals">3</div>
-          <div class="client-value">£213K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">Oltec Group</div>
-          <div class="client-deals">4</div>
-          <div class="client-value">£167K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">Whitbread (Premier Inn)</div>
-          <div class="client-deals">2</div>
-          <div class="client-value">£138K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">American Golf</div>
-          <div class="client-deals">3</div>
-          <div class="client-value">£115K</div>
-        </div>
-        <div class="client-row">
-          <div class="client-name">Shield Services</div>
-          <div class="client-deals">2</div>
-          <div class="client-value">£156K</div>
+        <div style="margin-bottom: 14px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>James Shields</span><span style="color:#a855f7">£275,395</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:1.7%;background:#a855f7"></div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Section: Team & KPIs -->
-  <div class="section-title">Sales Team & Strategic KPIs</div>
-
-  <div class="chart-grid-3">
-    <!-- Salesperson Pipeline -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Sales Team Pipeline</div>
-      </div>
-      <div>
-        <div class="sp-card">
-          <div class="sp-avatar" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">SH</div>
-          <div class="sp-info">
-            <div class="sp-name">Stephen Housley</div>
-            <div class="sp-deals">14 active deals</div>
-          </div>
-          <div class="sp-value">£768K</div>
-        </div>
-        <div class="sp-card">
-          <div class="sp-avatar" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);">GW</div>
-          <div class="sp-info">
-            <div class="sp-name">Grace Woodley</div>
-            <div class="sp-deals">5 active deals</div>
-          </div>
-          <div class="sp-value">£294K</div>
-        </div>
-        <div class="sp-card">
-          <div class="sp-avatar" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">JS</div>
-          <div class="sp-info">
-            <div class="sp-name">James Shields</div>
-            <div class="sp-deals">5 active deals</div>
-          </div>
-          <div class="sp-value">£252K</div>
-        </div>
-        <div class="sp-card">
-          <div class="sp-avatar" style="background: linear-gradient(135deg, #ef4444, #f87171);">DG</div>
-          <div class="sp-info">
-            <div class="sp-name">David Gillam</div>
-            <div class="sp-deals">3 active deals</div>
-          </div>
-          <div class="sp-value">£495K</div>
-        </div>
-      </div>
-      <div style="margin-top: 16px;">
-        <div class="chart-container-sm">
-          <canvas id="teamChart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Deal Source -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Deal Sources</div>
-      </div>
-      <div class="chart-container">
-        <canvas id="sourceChart"></canvas>
-      </div>
-    </div>
-
-    <!-- Strategic KPIs -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Year 1 Strategic KPIs</div>
-        <span class="card-badge badge-blue">2026 Targets</span>
-      </div>
-      <div class="kpi-grid">
-        <div class="strategic-kpi">
-          <div class="strategic-kpi-label">Total Revenue</div>
-          <div class="strategic-kpi-value">£1.91M</div>
-          <div class="strategic-kpi-target">Target: £13-14M</div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 14.7%; background: var(--accent);"></div>
-          </div>
-        </div>
-        <div class="strategic-kpi">
-          <div class="strategic-kpi-label">Net Margin</div>
-          <div class="strategic-kpi-value">—</div>
-          <div class="strategic-kpi-target">Target: 6-7%</div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 0%; background: var(--amber);"></div>
-          </div>
-        </div>
-        <div class="strategic-kpi">
-          <div class="strategic-kpi-label">FM Frameworks</div>
-          <div class="strategic-kpi-value">—</div>
-          <div class="strategic-kpi-target">Target: 2-3 secured</div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 0%; background: var(--green);"></div>
-          </div>
-        </div>
-        <div class="strategic-kpi">
-          <div class="strategic-kpi-label">Maint. Contracts</div>
-          <div class="strategic-kpi-value">—</div>
-          <div class="strategic-kpi-target">Target: 50 active</div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 0%; background: var(--cyan);"></div>
-          </div>
-        </div>
-        <div class="strategic-kpi">
-          <div class="strategic-kpi-label">Condition Surveys</div>
-          <div class="strategic-kpi-value">—</div>
-          <div class="strategic-kpi-target">Target: 200</div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 0%; background: var(--purple);"></div>
-          </div>
-        </div>
-        <div class="strategic-kpi">
-          <div class="strategic-kpi-label">Ireland Revenue</div>
-          <div class="strategic-kpi-value">—</div>
-          <div class="strategic-kpi-target">Target: £500K</div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 0%; background: var(--teal);"></div>
-          </div>
-        </div>
-        <div class="strategic-kpi">
-          <div class="strategic-kpi-label">Headcount (Ops)</div>
-          <div class="strategic-kpi-value">—</div>
-          <div class="strategic-kpi-target">Target: 80</div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 0%; background: var(--blue);"></div>
-          </div>
-        </div>
-        <div class="strategic-kpi">
-          <div class="strategic-kpi-label">RIDDOR Incidents</div>
-          <div class="strategic-kpi-value">—</div>
-          <div class="strategic-kpi-target">Target: 0</div>
-          <div class="progress-mini">
-            <div class="progress-mini-fill" style="width: 100%; background: var(--green);"></div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">Hot Deals & Awaiting Order — Immediate Action Required</div>
+    <table>
+      <thead><tr><th>Deal Name</th><th>Organisation</th><th>Value</th><th>Stage</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr><td>Welsh Air Ambulance</td><td>Legat Owen</td><td>£178,884</td><td><span class="badge badge-awaiting">Awaiting Order</span></td><td>James Shields / David Gillam</td></tr>
+        <tr><td>Poplar London – Block B & C</td><td>Trigon DM Ltd</td><td>£245,000</td><td><span class="badge badge-awaiting">Awaiting Order</span></td><td>David Gillam</td></tr>
+        <tr><td>PMY Group</td><td>PMY Group</td><td>£110,000</td><td><span class="badge badge-hot">Hot Deal</span></td><td>Grace Woodley</td></tr>
+        <tr><td>William Hill Edgeley</td><td>i2i By Citipost</td><td>£40,000</td><td><span class="badge badge-hot">Hot Deal</span></td><td>Stephen Housley</td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <!-- Section: Sales Meeting Actions -->
-  <div class="section-title">Sales Meeting Actions — 19 March 2026</div>
-
-  <div class="chart-grid-2">
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">David Gillam — Actions</div>
-        <span class="card-badge badge-amber">Due 26 Mar</span>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #ef4444, #f87171);">DG</div>
-        <div>
-          <div class="action-text">Finalise Claude CRM automation — auto-update dashboards from quotes and daily news</div>
-          <div class="action-due">Due: 26 March 2026</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #ef4444, #f87171);">DG</div>
-        <div>
-          <div class="action-text">Create and share 'Today's News' report template for sales reporting</div>
-          <div class="action-due">Due: 26 March 2026</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #ef4444, #f87171);">DG</div>
-        <div>
-          <div class="action-text">Allocate house accounts and quote ownership within CRM dashboards</div>
-          <div class="action-due">Due: 26 March 2026</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #ef4444, #f87171);">DG</div>
-        <div>
-          <div class="action-text">Pursue SSE PLC nuclear contracts and Park Holidays maintenance framework</div>
-          <div class="action-due">Due: 2 April 2026</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #ef4444, #f87171);">DG</div>
-        <div>
-          <div class="action-text">Follow up on outstanding quotes and PO confirmations including Lego project</div>
-          <div class="action-due">Due: 26 March 2026</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Team Actions</div>
-        <span class="card-badge badge-amber">Due 26 Mar</span>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);">GW</div>
-        <div>
-          <div class="action-text">Update top leads on dashboard — Home Bargains, Village Hotels, pipeline data</div>
-          <div class="action-due">Grace Woodley — Due: 26 March</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);">GW</div>
-        <div>
-          <div class="action-text">Assist with CRM data entry improvements alongside Dave</div>
-          <div class="action-due">Grace Woodley — Due: 26 March</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">SH</div>
-        <div>
-          <div class="action-text">Update pipeline with recent meetings and quotes — accurate stage progression</div>
-          <div class="action-due">Stephen Housley — Due: 26 March</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">SH</div>
-        <div>
-          <div class="action-text">Track callouts and sub-£25k projects on CRM for full pipeline visibility</div>
-          <div class="action-due">Stephen Housley — Due: 26 March</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">JS</div>
-        <div>
-          <div class="action-text">Verify and track rate cards and quotes — reconcile with CRM entries</div>
-          <div class="action-due">James Shields — Due: 26 March</div>
-        </div>
-      </div>
-      <div class="action-item">
-        <div class="action-owner" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">JS</div>
-        <div>
-          <div class="action-text">Log all new opportunities in pipeline with daily/weekly updates</div>
-          <div class="action-due">James Shields — Due: 26 March</div>
-        </div>
-      </div>
-    </div>
+  <div class="card">
+    <div class="card-title">Full Active Pipeline (Top 40 by Value)</div>
+    <table>
+      <thead><tr><th>#</th><th>Deal Name</th><th>Organisation</th><th>Value</th><th>Stage</th><th>Owner</th></tr></thead>
+      <tbody id="dealTable"></tbody>
+    </table>
   </div>
-
-  <!-- Footer -->
-  <div style="text-align: center; padding: 32px 0 16px; color: var(--text-muted); font-size: 12px;">
-    Data sourced from Monday.com — RMLFS Group CRM &nbsp;|&nbsp; Last updated: <span id="lastUpdated"></span>
-  </div>
-
 </div>
 
 <script>
-// Date display
-const now = new Date();
-document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-document.getElementById('lastUpdated').textContent = now.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const deals = [
+  {n:"Aldi Chelmsford",o:"DSP Construction",v:2747326,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Dan Foss LTD",o:"Dan Foss Ltd",v:2541000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Cencora Chessington",o:"CBRE",v:1355000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Cencora Leeds",o:"CBRE",v:545000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Genesis Centre",o:"The Momentum Group",v:520000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Primark Tooting",o:"ID Construction",v:383000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Primark Mansfield",o:"MITIE FM",v:360523,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Rowley Szilagy Europa Point",o:"Skyline Property",v:296855,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"B&M Gendros",o:"B&M",v:260000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"TK Maxx St Helens",o:"TJX Europe",v:250000,s:"Quote Sent 25k+",p:"David Gillam"},
+  {n:"Dunbarton",o:"B&M",v:250000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Whitescroft",o:"B&M",v:250000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Poplar London – Block B&C",o:"Trigon DM",v:245000,s:"Awaiting Order",p:"David Gillam"},
+  {n:"B&M Farlington",o:"B&M",v:234000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Primark Torquay",o:"ID Construction",v:230000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"B&M Nuneaton",o:"B&M",v:217000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"B&M Charlton 18",o:"B&M",v:150000,s:"Conversation Stage",p:"Unassigned"},
+  {n:"Luxfer MEL Technologies",o:"Luxfer MEL",v:147000,s:"Interested",p:"Unassigned"},
+  {n:"Primark Stevenage",o:"ID Construction",v:144000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Stoke Hammond",o:"Stoke Hammond SC",v:139449,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Low Bridge",o:"Low Bridge",v:134216,s:"Won/Project",p:"Ciaran"},
+  {n:"Welsh Air Ambulance",o:"Legat Owen",v:178884,s:"Awaiting Order",p:"James Shields"},
+  {n:"Springfield Hotel",o:"Mason Partners",v:181000,s:"Interested",p:"Unassigned"},
+  {n:"B&M Reading",o:"B&M",v:220000,s:"Interested",p:"Unassigned"},
+  {n:"Shield - Jennons Court",o:"Shield Services",v:127000,s:"Conversation Stage",p:"Stephen Housley"},
+  {n:"PMY Group",o:"PMY Group",v:110000,s:"Hot Deal",p:"Grace Woodley"},
+  {n:"Stena - Terminal 1 Holyhead",o:"Legat Owen",v:104788,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Mason Partners SCS Stoke",o:"Mason Partners",v:98465,s:"Interested",p:"Unassigned"},
+  {n:"12 Chapel Street",o:"Bloc Building",v:97260,s:"Quote Sent 25k+",p:"Stephen Housley"},
+  {n:"Go Outdoors Ipswich",o:"JD Sports",v:96132,s:"Conversation Stage",p:"Unassigned"},
+  {n:"Dalau Ltd",o:"Dalau Ltd",v:88651,s:"Quote Sent 25k+",p:"Grace Woodley"},
+  {n:"B&M Linwood",o:"B&M",v:86600,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"American Golf - Head Office",o:"American Golf",v:83600,s:"Conversation Stage",p:"Stephen Housley"},
+  {n:"B&M Mexborough",o:"B&M",v:82000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Whitbread Prem Inn Cov",o:"Whitbread",v:72808,s:"Quote Sent 25k+",p:"Stephen Housley"},
+  {n:"Tilly Bailey & Irvine",o:"Tilly Bailey",v:71266,s:"Interested",p:"Grace Woodley"},
+  {n:"Senlan Industrial Estate",o:"Locke Property",v:70000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"i2i - Mansfield",o:"i2i By Citipost",v:69839,s:"Quote Sent 25k+",p:"Stephen Housley"},
+  {n:"MITIE FM Primark Wallasey",o:"MITIE FM",v:100000,s:"Quote Sent 25k+",p:"Unassigned"},
+  {n:"Primark Wolves",o:"MITIE FM",v:80000,s:"Quote Sent 25k+",p:"Unassigned"},
+];
 
-// Chart defaults
-Chart.defaults.color = '#9ca3af';
-Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
-Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+const tbody = document.getElementById('dealTable');
+deals.forEach((d,i) => {
+  const stageBadge = {
+    "Quote Sent 25k+":"badge-quote","Conversation Stage":"badge-conversation",
+    "Interested":"badge-interested","Hot Deal":"badge-hot","Awaiting Order":"badge-awaiting"
+  }[d.s] || "badge-conversation";
+  tbody.innerHTML += `<tr><td>${i+1}</td><td>${d.n}</td><td>${d.o}</td><td>£${d.v.toLocaleString()}</td><td><span class="badge ${stageBadge}">${d.s}</span></td><td>${d.p}</td></tr>`;
+});
 
-// 1. Revenue Chart — Target vs Actual
-const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-new Chart(revenueCtx, {
+// Stage chart
+new Chart(document.getElementById('stageChart'), {
   type: 'bar',
   data: {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    datasets: [
-      {
-        label: 'Target',
-        data: [850000, 870000, 900000, 1000000, 1050000, 1100000, 1100000, 1100000, 1150000, 1150000, 1200000, 1200000],
-        backgroundColor: 'rgba(99,102,241,0.25)',
-        borderColor: 'rgba(99,102,241,0.6)',
-        borderWidth: 1,
-        borderRadius: 4,
-        barPercentage: 0.6,
-      },
-      {
-        label: 'Actual',
-        data: [1067642, 783462, 54068, null, null, null, null, null, null, null, null, null],
-        backgroundColor: function(ctx) {
-          const val = ctx.raw;
-          const targets = [850000, 870000, 900000];
-          const idx = ctx.dataIndex;
-          if (val === null) return 'transparent';
-          if (idx < 3 && val >= targets[idx]) return 'rgba(34,197,94,0.7)';
-          return 'rgba(245,158,11,0.7)';
-        },
-        borderColor: function(ctx) {
-          const val = ctx.raw;
-          const targets = [850000, 870000, 900000];
-          const idx = ctx.dataIndex;
-          if (val === null) return 'transparent';
-          if (idx < 3 && val >= targets[idx]) return '#22c55e';
-          return '#f59e0b';
-        },
-        borderWidth: 1,
-        borderRadius: 4,
-        barPercentage: 0.6,
-      }
-    ]
+    labels: ['Quote Sent', 'Interested', 'Conversation', 'Awaiting Order', 'Hot Deal'],
+    datasets: [{
+      data: [14113248, 777649, 758616, 423884, 150000],
+      backgroundColor: ['#6366f1','#22c55e','#94a3b8','#f59e0b','#ef4444'],
+      borderRadius: 6
+    }]
   },
   options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { intersect: false, mode: 'index' },
-    plugins: {
-      legend: { display: true, position: 'top', labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 16 } },
-      tooltip: {
-        callbacks: {
-          label: function(ctx) {
-            if (ctx.raw === null) return '';
-            return ctx.dataset.label + ': £' + (ctx.raw/1000).toFixed(0) + 'K';
-          }
-        }
-      }
-    },
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
     scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function(val) { return '£' + (val/1000000).toFixed(1) + 'M'; }
-        },
-        grid: { color: 'rgba(255,255,255,0.04)' }
-      },
-      x: { grid: { display: false } }
+      x: { ticks: { color: '#64748b', font: {size:10} }, grid: { color: '#1e2130' } },
+      y: { ticks: { color: '#64748b', font: {size:10}, callback: v => '£'+Math.round(v/1000000*10)/10+'m' }, grid: { color: '#1e2130' } }
     }
   }
 });
 
-// 2. Pipeline Doughnut
-const pipelineCtx = document.getElementById('pipelineChart').getContext('2d');
-new Chart(pipelineCtx, {
+// Person chart
+new Chart(document.getElementById('personChart'), {
   type: 'doughnut',
   data: {
-    labels: ['Quote Sent 25k+', 'Conversation', 'Interested', 'Awaiting Order', 'Hot Deal', 'Awaiting Quote'],
+    labels: ['Unassigned', 'Stephen Housley', 'David Gillam', 'Grace Woodley', 'James Shields'],
     datasets: [{
-      data: [174, 19, 12, 2, 1, 53],
-      backgroundColor: [
-        '#3b82f6',
-        '#818cf8',
-        '#4eccc6',
-        '#22c55e',
-        '#ffcb00',
-        '#6b7280'
-      ],
-      borderColor: '#1a1d27',
-      borderWidth: 3,
+      data: [14339372, 818937, 495000, 294693, 275395],
+      backgroundColor: ['#374151','#6366f1','#22c55e','#f59e0b','#a855f7'],
+      borderWidth: 0
     }]
   },
   options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '65%',
+    responsive: true, maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          padding: 12,
-          font: { size: 11 }
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(ctx) {
-            const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
-            const pct = ((ctx.raw / total) * 100).toFixed(1);
-            return ctx.label + ': ' + ctx.raw + ' deals (' + pct + '%)';
-          }
-        }
-      }
-    }
-  }
-});
-
-// 3. Team Chart
-const teamCtx = document.getElementById('teamChart').getContext('2d');
-new Chart(teamCtx, {
-  type: 'bar',
-  data: {
-    labels: ['Stephen H', 'David G', 'Grace W', 'James S'],
-    datasets: [{
-      label: 'Pipeline Value (£K)',
-      data: [768, 495, 294, 252],
-      backgroundColor: [
-        'rgba(99,102,241,0.7)',
-        'rgba(239,68,68,0.7)',
-        'rgba(6,182,212,0.7)',
-        'rgba(245,158,11,0.7)'
-      ],
-      borderRadius: 6,
-      barPercentage: 0.6,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    indexAxis: 'y',
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: function(ctx) { return '£' + ctx.raw + 'K pipeline'; }
-        }
-      }
-    },
-    scales: {
-      x: {
-        beginAtZero: true,
-        ticks: { callback: function(val) { return '£' + val + 'K'; } },
-        grid: { color: 'rgba(255,255,255,0.04)' }
-      },
-      y: { grid: { display: false } }
-    }
-  }
-});
-
-// 4. Deal Source Chart
-const sourceCtx = document.getElementById('sourceChart').getContext('2d');
-new Chart(sourceCtx, {
-  type: 'doughnut',
-  data: {
-    labels: ['Repeat Client', 'Phone Enquiry', 'Tender', 'Mail Shot', 'New Client', 'Webform', 'Not Set'],
-    datasets: [{
-      data: [5, 5, 2, 2, 3, 2, 81],
-      backgroundColor: [
-        '#22c55e',
-        '#3b82f6',
-        '#a855f7',
-        '#f59e0b',
-        '#06b6d4',
-        '#6366f1',
-        '#374151'
-      ],
-      borderColor: '#1a1d27',
-      borderWidth: 3,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '60%',
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          padding: 10,
-          font: { size: 11 }
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(ctx) {
-            return ctx.label + ': ' + ctx.raw + ' deals';
-          }
-        }
-      }
+      legend: { position: 'right', labels: { color: '#94a3b8', font: {size:11}, padding: 10 } }
     }
   }
 });
 </script>
-
 </body>
 </html>
