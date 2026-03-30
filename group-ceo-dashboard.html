@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMLFS Group CEO Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f1117; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+  .top-bar { background: #12151f; border-bottom: 1px solid #2a2d3a; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .top-bar-left { display: flex; align-items: center; gap: 16px; }
+  .logo { font-size: 16px; font-weight: 800; color: #e2e8f0; letter-spacing: -0.5px; }
+  .logo span { color: #6366f1; }
+  .refresh-time { font-size: 11px; color: #64748b; }
+  .pillar-chips { display: flex; gap: 8px; }
+  .chip { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .chip-sales { background: rgba(99,102,241,0.2); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); }
+  .chip-projects { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .chip-maintenance { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .chip-finance { background: rgba(168,85,247,0.2); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+  .tab-bar { background: #12151f; border-bottom: 1px solid #2a2d3a; display: flex; padding: 0 24px; flex-shrink: 0; }
+  .tab { padding: 10px 20px; font-size: 13px; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+  .tab:hover { color: #94a3b8; }
+  .tab.active { color: #e2e8f0; border-bottom-color: #6366f1; }
+  .tab-content { display: none; flex: 1; overflow: auto; }
+  .tab-content.active { display: flex; flex-direction: column; }
+  .tab-iframe { width: 100%; flex: 1; border: none; background: #0f1117; }
+  .overview-content { padding: 16px 24px; overflow-y: auto; }
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 14px; }
+  .kpi-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .kpi-value { font-size: 20px; font-weight: 700; color: #e2e8f0; margin: 4px 0; }
+  .kpi-sub { font-size: 11px; color: #64748b; }
+  .kpi-sub.up { color: #22c55e; }
+  .kpi-sub.down { color: #ef4444; }
+  .kpi-sub.warn { color: #f59e0b; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px; padding: 20px; }
+  .card-title { font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .chart-container { position: relative; height: 200px; }
+  .alert-list { display: flex; flex-direction: column; gap: 8px; }
+  .alert { padding: 10px 14px; border-radius: 8px; font-size: 12px; }
+  .alert-red { background: #2d1b1b; border-left: 3px solid #ef4444; }
+  .alert-amber { background: #2d2200; border-left: 3px solid #f59e0b; }
+  .alert-green { background: #0d2a1a; border-left: 3px solid #22c55e; }
+  .alert-title { font-weight: 600; margin-bottom: 2px; }
+  .alert-red .alert-title { color: #f87171; }
+  .alert-amber .alert-title { color: #fbbf24; }
+  .alert-green .alert-title { color: #4ade80; }
+  .alert-body { color: #94a3b8; font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #0f1117; color: #64748b; font-weight: 600; text-align: left; padding: 7px 10px; border-bottom: 1px solid #2a2d3a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 7px 10px; border-bottom: 1px solid #1e2130; color: #cbd5e1; }
+  td.num { text-align: right; }
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="logo"><span>RMLFS</span> Group CEO Command Center</div>
+    <div class="refresh-time">🔄 Refreshed Monday 30 March 2026 · Live from Monday.com</div>
+  </div>
+  <div class="pillar-chips">
+    <div class="chip chip-sales">📊 Sales: £16.2m pipeline</div>
+    <div class="chip chip-projects">🏗️ Projects: 9 live · 1 RED</div>
+    <div class="chip chip-maintenance">🔧 Maintenance: Board live</div>
+    <div class="chip chip-finance">💰 Finance: 37.2% GM</div>
+  </div>
+</div>
+<div class="tab-bar">
+  <div class="tab active" onclick="showTab('overview', this)">🏠 Group Overview</div>
+  <div class="tab" onclick="showTab('sales', this)">📊 Sales</div>
+  <div class="tab" onclick="showTab('projects', this)">🏗️ Projects</div>
+  <div class="tab" onclick="showTab('maintenance', this)">🔧 Maintenance</div>
+  <div class="tab" onclick="showTab('finance', this)">💰 Finance</div>
+</div>
+
+<!-- GROUP OVERVIEW TAB (inline) -->
+<div id="tab-overview" class="tab-content active">
+  <div class="overview-content">
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">Feb Revenue</div>
+        <div class="kpi-value">£990k</div>
+        <div class="kpi-sub down">↓ –4.9% vs £1.04m target</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Sales Pipeline</div>
+        <div class="kpi-value">£16.2m</div>
+        <div class="kpi-sub">100 active deals</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Gross Margin (Feb)</div>
+        <div class="kpi-value" style="color:#22c55e">37.2%</div>
+        <div class="kpi-sub up">↑ +9.7pts vs 33.9% plan</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Net Profit (Feb)</div>
+        <div class="kpi-value" style="color:#f59e0b">£55.7k</div>
+        <div class="kpi-sub down">↓ –22.6% vs £72k target</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">FY26 Annual Target</div>
+        <div class="kpi-value">£12.5m</div>
+        <div class="kpi-sub warn">Run rate: £11.9m</div>
+      </div>
+    </div>
+
+    <!-- Cross-Pillar Alerts -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">⚡ Cross-Pillar Alerts — Week of 30 March 2026</div>
+      <div class="alert-list">
+        <div class="alert alert-red">
+          <div class="alert-title">🔴 Projects: BM Dallas OVERDUE — Jack Gillam Action Required</div>
+          <div class="alert-body">Contract end date 28 March PASSED. Only 40% complete. Forecast slipped to 17 April. Margin at 25% (below 33.9% target). £17,618 outstanding. Immediate PM review needed.</div>
+        </div>
+        <div class="alert alert-red">
+          <div class="alert-title">🔴 Finance: Net Profit 22.6% Below Monthly Target</div>
+          <div class="alert-body">Feb net profit £55,730 vs £72,031 target. Admin costs at £322k consuming 32.5% of revenue. Overhead control critical — target trajectory requires NM to reach 6.9% by FY26 year-end.</div>
+        </div>
+        <div class="alert alert-amber">
+          <div class="alert-title">⚠️ Sales: Revenue Run Rate 4.9% Below FY26 Target</div>
+          <div class="alert-body">Feb revenue £990,643 vs £1,041,667 monthly target. Annualised run rate £11.9m vs £12.5m goal. £14.3m of pipeline unassigned to a salesperson — ownership needed to accelerate conversion.</div>
+        </div>
+        <div class="alert alert-amber">
+          <div class="alert-title">⚠️ Sales: Large Unassigned Deals Need Owner Allocation</div>
+          <div class="alert-body">Aldi Chelmsford £2.75m, Dan Foss £2.54m, Cencora Chessington £1.35m all have no assigned salesperson. Welsh Air Ambulance (£179k) and Poplar London (£245k) awaiting order — push to close.</div>
+        </div>
+        <div class="alert alert-amber">
+          <div class="alert-title">⚠️ Projects: Low Invoice % — £407k Pending Invoicing</div>
+          <div class="alert-body">Only 15.3% of live project value invoiced (£73k of £480k). Poundland 95% complete (£68k ready), Eaton House 70% (£70k), Mountain Warehouse 70% (£33k). Cash flow impact — invoice promptly.</div>
+        </div>
+        <div class="alert alert-green">
+          <div class="alert-title">✅ Finance: Gross Margin Significantly Ahead of Plan</div>
+          <div class="alert-body">Feb GM 37.2% vs 33.9% FY26 forecast — 9.7pts above plan. Strong margin performance tracking well ahead of the 37% FY31 target. Margin discipline is working.</div>
+        </div>
+        <div class="alert alert-green">
+          <div class="alert-title">✅ Projects: Strong Average Project Margin at 42.7%</div>
+          <div class="alert-body">8 projects with value averaging 42.7% margin — significantly above the 33.9% FY26 target. Low Bridge (£134k) and Go Outdoors (£60k) starting this week. Good forward workload.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">5-Year Growth Strategy — Revenue & Profit</div>
+        <div class="chart-container">
+          <canvas id="growthChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Financial Snapshot — FY26 to FY31</div>
+        <table>
+          <thead><tr><th>Year</th><th class="num">Revenue</th><th class="num">GM%</th><th class="num">Net Profit</th><th class="num">Cash</th></tr></thead>
+          <tbody>
+            <tr style="background:#1e1a2a"><td><strong>FY26</strong></td><td class="num">£12.5m</td><td class="num">33.9%</td><td class="num">£864k</td><td class="num">£800k</td></tr>
+            <tr><td>FY27</td><td class="num">£16.5m</td><td class="num">34.0%</td><td class="num">£1.41m</td><td class="num">£1.72m</td></tr>
+            <tr><td>FY28</td><td class="num">£21.0m</td><td class="num">35.0%</td><td class="num">£2.31m</td><td class="num">£3.46m</td></tr>
+            <tr><td>FY29</td><td class="num">£26.25m</td><td class="num">36.0%</td><td class="num">£3.61m</td><td class="num">£6.45m</td></tr>
+            <tr><td>FY30</td><td class="num">£32.1m</td><td class="num">36.0%</td><td class="num">£4.87m</td><td class="num">£10.59m</td></tr>
+            <tr><td>FY31</td><td class="num">£37.45m</td><td class="num">37.0%</td><td class="num">£6.37m</td><td class="num">£16.24m</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SALES TAB (iframe) -->
+<div id="tab-sales" class="tab-content">
+  <iframe class="tab-iframe" src="sales.html" loading="lazy"></iframe>
+</div>
+
+<!-- PROJECTS TAB (iframe) -->
+<div id="tab-projects" class="tab-content">
+  <iframe class="tab-iframe" src="projects.html" loading="lazy"></iframe>
+</div>
+
+<!-- MAINTENANCE TAB (iframe) -->
+<div id="tab-maintenance" class="tab-content">
+  <iframe class="tab-iframe" src="maintenance.html" loading="lazy"></iframe>
+</div>
+
+<!-- FINANCE TAB (iframe) -->
+<div id="tab-finance" class="tab-content">
+  <iframe class="tab-iframe" src="finance.html" loading="lazy"></iframe>
+</div>
+
+<script>
+function showTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+new Chart(document.getElementById('growthChart'), {
+  type: 'bar',
+  data: {
+    labels: ['FY26','FY27','FY28','FY29','FY30','FY31'],
+    datasets: [{
+      label: 'Revenue (£m)',
+      data: [12.5,16.5,21.0,26.25,32.1,37.45],
+      backgroundColor: 'rgba(99,102,241,0.7)',
+      borderRadius: 5,
+      yAxisID: 'y'
+    },{
+      label: 'Net Profit (£m)',
+      type: 'line',
+      data: [0.864,1.41,2.31,3.61,4.87,6.37],
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34,197,94,0.1)',
+      pointBackgroundColor: '#22c55e',
+      tension: 0.3,
+      fill: true,
+      yAxisID: 'y'
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#94a3b8', font: {size:11} } } },
+    scales: {
+      x: { ticks: { color: '#64748b', font: {size:10} }, grid: { color: '#1e2130' } },
+      y: { ticks: { color: '#64748b', font: {size:10}, callback: v => '£'+v+'m' }, grid: { color: '#1e2130' } }
+    }
+  }
+});
+</script>
+</body>
+</html>
